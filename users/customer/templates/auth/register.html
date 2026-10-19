@@ -18,11 +18,6 @@
             <label for="name">Full Name</label>
             <input id="name" name="name" type="text" autocomplete="name" maxlength="50" aria-describedby="name-help" required value="{{ request.form.get('name', '') }}">
             <small id="name-help" class="auth-help" aria-live="polite" role="status"></small>
-            <!-- Username registration is temporarily disabled. Keep this field commented for later.
-            <label for="username">Username</label>
-            <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="20" pattern="[A-Za-z0-9_.]{3,20}" aria-describedby="username-help" required value="{{ request.form.get('username', '') }}">
-            <small id="username-help" class="auth-help" aria-live="polite" role="status"></small>
-            -->
             <label for="email">Email address</label>
             <input id="email" name="email" type="email" autocomplete="email" maxlength="100" data-check-url="{{ url_for('auth.check_email') }}" aria-describedby="email-help" required value="{{ request.form.get('email', '') }}">
             <small id="email-help" class="auth-help" aria-live="polite" role="status"></small>
@@ -40,4 +35,3 @@
 {% endblock %}
 
 {% block scripts %}<script src="{{ url_for('customer_bp.static', filename='js/register.js') }}"></script>{% endblock %}
-

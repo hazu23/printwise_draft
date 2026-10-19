@@ -137,6 +137,7 @@ def login():
         if user is None or not check_password_hash(user.get('password_hash', ''), password):
             flash('Email or password is incorrect.', 'error')  # Show a one-time error on the page.
         else:
+            # session management: Clear any old session, then store the logged-in user’s ID, name, and role.
             session.clear()  # Remove any old user's session information.
             session['user_id'] = user['id']  # Store the account ID in Flask's signed session.
             session['user_name'] = user['name']  # Used for the greeting in the navigation bar.
@@ -181,6 +182,7 @@ def register():
     return render_template('auth/register.html')
 
 
+# session management: The logout route clears the session.
 # Only accept POST for logout; loading a page/link should not log someone out by accident.
 @auth.route('/logout', methods=('POST',))
 def logout():

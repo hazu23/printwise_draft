@@ -1,8 +1,6 @@
 const fullNameInput = document.getElementById("name");
 const registrationForm = fullNameInput?.form;
 const fullNameFeedback = document.getElementById("name-help");
-// const usernameInput = document.getElementById("username"); // Temporarily disabled.
-// const usernameFeedback = document.getElementById("username-help");
 const emailInput = document.getElementById("email");
 const emailFeedback = document.getElementById("email-help");
 const passwordInput = document.getElementById("password");
@@ -228,34 +226,6 @@ if (fullNameInput && registrationForm && fullNameFeedback) {
     });
 }
 
-/* Username validation is temporarily disabled with the registration field.
-if (usernameInput && usernameFeedback) {
-    blockSpaces(usernameInput, usernameFeedback, "Spaces aren't allowed in a username.");
-
-    function showUsernameError() {
-        const username = usernameInput.value;
-        let message = "";
-
-        if (/\s/.test(username)) {
-            message = "Spaces aren't allowed in a username.";
-        } else if (/[^A-Za-z0-9_.]/.test(username)) {
-            message = "Use only letters, numbers, underscores (_), or periods (.).";
-        } else if (username.length > 0 && username.length < 3) {
-            message = "A username must contain at least 3 characters.";
-        } else if (username.length > 20) {
-            message = "A username can't be longer than 20 characters.";
-        }
-
-        usernameFeedback.textContent = message;
-        usernameInput.setAttribute("aria-invalid", message ? "true" : "false");
-        return message;
-    }
-
-    usernameInput.addEventListener("input", showUsernameError);
-    usernameInput.addEventListener("blur", showUsernameError);
-}
-*/
-
 if (emailInput && emailFeedback) {
     blockSpaces(emailInput, emailFeedback, "Spaces aren't allowed in an email address.");
 
@@ -316,3 +286,4 @@ if (emailInput && emailFeedback) {
     emailInput.addEventListener("input", showEmailError);
     emailInput.addEventListener("blur", showEmailError);
 }
+
