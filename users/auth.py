@@ -44,8 +44,8 @@ def load_users():
 
     try:
         # 'r' means read mode; UTF-8 is the text encoding; json.load parses the file.
-        with open(path, 'r', encoding='utf-8') as users_file:
-            users = json.load(users_file)
+        with open(path, 'r', encoding='utf-8') as json_file:
+            users = json.load(json_file)
     # Report missing/unreadable files or invalid JSON instead of silently losing accounts.
     except (OSError, json.JSONDecodeError) as error:
         raise RuntimeError('The local user file could not be read. Preserve it and check its contents.') from error
@@ -199,3 +199,5 @@ def check_email():
     email = payload.get('email', '') if isinstance(payload, dict) else ''
     valid = _is_valid_email(email)  # Use the same validation as account registration.
     return jsonify({'valid': bool(valid)})  # Send a JSON true/false result back to the browser.
+
+
