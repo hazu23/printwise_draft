@@ -1,256 +1,199 @@
-#Registration, login, logout, and simple role checks
+import json # json reads and writes the users.json account file.
+import os # os handles folders and file paths.
+import re # re provides regular-expression support for email checks.
+import tempfile # tempfile creates a temporary file so saved data can be replaced safely.
+import threading # threading provides a lock to coordinate simultaneous requests in this process.
+import uuid # uuid creates unique IDs for newly registered users.
 
-# import re  # Temporarily unused; this was used to validate usernames.
-from functools import wraps
-
-from flask import flash, jsonify, redirect, render_template, request, session, url_for  # these are used by the login and registration routes
+# Flask tools used to define routes, read requests, render pages, display messages,
+# return JSON, redirect browsers, and store signed-in user data in sessions.
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, session, url_for
+# Werkzeug hashes passwords for storage and verifies a submitted password later.
 from werkzeug.security import check_password_hash, generate_password_hash
-from email_validator import EmailNotValidError, validate_email
 
-from users import auth_bp
-from users.db import get_db  # provides a connection to the database
-
-EMAIL_PROVIDER_DOMAINS = {
-    "gmail.com",
-    "googlemail.com",
-    "outlook.com",
-    "hotmail.com",
-    "live.com",
-    "msn.com",
-    "yahoo.com",
-    "yahoo.co.uk",
-    "yahoo.ca",
-    "yahoo.com.au",
-    "ymail.com",
-    "rocketmail.com",
-    "icloud.com",
-    "me.com",
-    "mac.com",
-    "aol.com",
-    "proton.me",
-    "protonmail.com",
-    "gmx.com",
-    "gmx.net",
-    "mail.com",
-    "zoho.com",
-    "fastmail.com",
-    "hey.com",
-    "tuta.com",
-    "tutanota.com",
-    "yandex.com",
-    "yandex.ru",
+# A Blueprint groups related Flask routes. Its name appears in endpoint names like auth.login.
+auth = Blueprint('auth', __name__)
+# A lock prevents two requests in this Python process from changing users.json at once.
+users_lock = threading.Lock()
+# This pattern accepts a simple email shape such as name@example.com.
+Email_Pattern = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
+# Registration accepts only addresses from these known email provider domains.
+Allowed_Emails = {
+    'gmail.com', 'googlemail.com',
+    'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
+    'yahoo.com', 'yahoo.co.uk', 'yahoo.ca', 'yahoo.com.au', 'ymail.com', 'rocketmail.com',
+    'icloud.com', 'me.com', 'mac.com',
+    'aol.com', 'proton.me', 'protonmail.com', 'gmx.com', 'gmx.net', 'mail.com',
+    'zoho.com', 'fastmail.com', 'hey.com', 'tuta.com', 'tutanota.com', 'yandex.com', 'yandex.ru',
 }
 
 
-def is_valid_full_name(name):
-    """Allow letter-only name parts, middle initials, and common suffixes."""
-    # Names must not start or end with spaces or contain repeated spaces.
-    if not name or len(name) > 50 or name != name.strip() or "  " in name:
-        return False
-
-    parts = name.split(" ")
-    suffixes = {"sr.", "jr.", "ii", "iii", "iv", "v", "vi"}
-
-    # Remove a recognized suffix before checking the person's first and last names.
-    if parts[-1].casefold() in suffixes:
-        parts.pop()
-
-    # A full name needs at least a first name and a last name.
-    if len(parts) < 2 or not parts[0].isalpha() or not parts[-1].isalpha():
-        return False
-
-    # Require six letters in the actual name; punctuation and suffixes do not count.
-    letter_count = 0
-    for part in parts:
-        for character in part:
-            if character.isalpha():
-                letter_count += 1
-
-    if letter_count < 6:
-        return False
-
-    # Middle names may be words or a single letter followed by a period.
-    for part in parts[1:-1]:
-        if part.isalpha():
-            continue
-        if len(part) == 2 and part[0].isalpha() and part[1] == ".":
-            continue
-        return False
-
-    return True
+# Build and return the path to this app's account JSON file.
+def users_file():
+    # Ensure Flask's instance folder exists; exist_ok avoids an error if it already does.
+    os.makedirs(current_app.instance_path, exist_ok=True)
+    # Keep user data in instance/users.json, separate from the Python source files.
+    return os.path.join(current_app.instance_path, 'users.json')
 
 
-def is_valid_email(email):
-    """Check email format and whether its domain can receive email."""
-    if not email or len(email) > 100 or any(character.isspace() for character in email):
-        return False
+# Read every account from the JSON file and return a Python list.
+def load_users():
+    path = users_file()  # Get the file path and create its parent folder if needed.
+    if not os.path.exists(path):  # If no one has registered yet, there are no accounts.
+        return []
 
     try:
-        # Check the domain's mail records; this supports different email providers.
-        validated_email = validate_email(email, check_deliverability=True, timeout=3)
-    except EmailNotValidError:
+        # 'r' means read mode; UTF-8 is the text encoding; json.load parses the file.
+        with open(path, 'r', encoding='utf-8') as users_file:
+            users = json.load(users_file)
+    # Report missing/unreadable files or invalid JSON instead of silently losing accounts.
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError('The local user file could not be read. Preserve it and check its contents.') from error
+
+    # The top-level value should be a list, with one dictionary per user.
+    if not isinstance(users, list):
+        raise RuntimeError('The local user file has an invalid format. Preserve it and check its contents.')
+    return users  # Return the parsed list to the caller.
+
+
+# Save the supplied list of account records to users.json.
+def _save_users(users):
+    path = users_file()  # Destination path for the permanent JSON file.
+    temp_path = None  # This will hold the temporary file's path for cleanup.
+    try:
+        # Write beside users.json so os.replace can swap files safely on the same drive.
+        with tempfile.NamedTemporaryFile(
+            mode='w', encoding='utf-8', newline='\n', dir=current_app.instance_path,
+            prefix='users-', suffix='.tmp', delete=False,
+        ) as temp_file:
+            temp_path = temp_file.name  # Remember the temporary file's path.
+            # Convert Python values into readable JSON text; indent adds formatting.
+            json.dump(users, temp_file, ensure_ascii=False, indent=2)
+            temp_file.write('\n')  # Add a final newline for readability.
+        os.replace(temp_path, path)  # Replace users.json only after the full new file is written.
+    finally:
+        # If saving failed, remove any temporary file left behind.
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
+# Check both email syntax and whether its domain is in the allowed-provider list.
+def _is_valid_email(email):
+    # Reject non-text input, addresses over 100 characters, and strings that don't match the pattern.
+    if not isinstance(email, str) or len(email) > 100 or not Email_Pattern.fullmatch(email):
         return False
+    # Get the part after @, lowercase it, and remove a trailing dot if there is one.
+    domain = email.rsplit('@', 1)[1].lower().rstrip('.')
+    # 'in' checks whether this domain appears in Allowed_Emails above.
+    return domain in Allowed_Emails
 
-    # Only allow known email-provider domains, so website domains like youtube.com are rejected.
-    domain = validated_email.domain.lower().rstrip(".")
-    return domain in EMAIL_PROVIDER_DOMAINS
 
-
-def get_registration_error(name, email, password, confirm_password):
-    """Return an error message when a registration field is invalid."""
-    if not name or not email or not password:
-        return "Please fill in every field."
-
-    if not is_valid_full_name(name):
-        return (
-            "Enter a full name with at least two words and six letters. "
-            "Use letters and single spaces; a middle initial may end with a period, "
-            "and suffixes like Jr., Sr., or III are allowed."
-        )
-
-    # Username validation is temporarily disabled with the registration field.
-    # if not re.fullmatch(r"[a-z0-9_.]{3,20}", username):
-    #     return "Enter a valid username."
-
-    if any(character.isspace() for character in email):
-        return "Spaces are not allowed in an email address."
-    if len(email) > 100:
-        return "Email addresses can't be longer than 100 characters."
-    if not is_valid_email(email):
-        return "Enter a valid email address."
-
-    if any(character.isspace() for character in password) or any(
-        character.isspace() for character in confirm_password
-    ):
+# Return an error message for the first invalid registration field; return None if all pass.
+def _registration_error(name, email, password, confirmation):
+    # Empty strings are false in Python; this checks that every required value was submitted.
+    if not name or not email or not password or not confirmation:
+        return 'Please fill in every field.'
+    # Reject leading/trailing spaces, repeated spaces, and names longer than 50 characters.
+    if name != name.strip() or '  ' in name or len(name) > 50:
+        return 'Enter your full name using single spaces, with no spaces at the beginning or end.'
+    parts = name.split(' ')  # Break the full name into separate words.
+    # Require at least a first and last name, each containing letters only.
+    if len(parts) < 2 or not parts[0].isalpha() or not parts[-1].isalpha():
+        return 'Enter your first and last name using letters.'
+    # Reuse the same syntax and provider checks used by the live email-check route.
+    if not _is_valid_email(email):
+        return 'Enter an email address from a supported provider, such as Gmail, Outlook, Yahoo, or iCloud.'
+    # A password cannot contain whitespace such as spaces or tabs.
+    if any(character.isspace() for character in password):
         return "Spaces aren't allowed in passwords."
-    if len(password) < 8:
-        return "Your password must be at least 8 characters long."
-    if not any(character.isalpha() for character in password):
-        return "Your password must include at least one letter."
-    if not any("0" <= character <= "9" for character in password):
-        return "Your password must include at least one number."
-    if not any(not character.isalnum() and not character.isspace() for character in password):
-        return "Your password must include at least one special character."
-    if password != confirm_password:
-        return "The passwords do not match."
-
-    return None
-
-
-def start_user_session(user):
-    """Remember the logged-in user's ID, name, and role for later requests."""
-    # Clear any old login data before starting this user's session.
-    session.clear()
-    # Store only the information the app needs to recognize this user.
-    session["user_id"] = user["id"]
-    session["user_name"] = user["name"]
-    session["user_role"] = user["role"]
+    if len(password) < 8:  # Require at least eight characters.
+        return 'Your password must be at least 8 characters long.'
+    if not any(character.isalpha() for character in password):  # Require at least one letter.
+        return 'Your password must include at least one letter.'
+    if not any(character.isdigit() for character in password):  # Require at least one number.
+        return 'Your password must include at least one number.'
+    if not any(not character.isalnum() for character in password):  # Require a punctuation mark or symbol.
+        return 'Your password must include at least one special character.'
+    if password != confirmation:  # Catch a typo in the repeated-password field.
+        return 'The passwords do not match.'
+    return None  # None means every validation check passed.
 
 
-@auth_bp.route("/register", methods=("GET", "POST"))
-def register():
-    """Create a customer account from the registration form."""
-    if request.method == "POST":
-        name = request.form.get("name", "")
-        # username = request.form.get("username", "").lower()  # Temporarily disabled.
-        email = request.form.get("email", "").lower()
-        password = request.form.get("password", "")
-        confirm_password = request.form.get("confirm_password", "")
-
-        error_message = get_registration_error(name, email, password, confirm_password)
-        if error_message:
-            flash(error_message, "error")
-        else:
-            database = get_db()
-            with database.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id FROM users WHERE email = %s",
-                    (email,),
-                )
-                # Username checks are disabled; the previous query also checked username:
-                # cursor.execute("SELECT id FROM users WHERE email = %s OR username = %s", (email, username))
-                existing_user = cursor.fetchone()
-
-            if existing_user:
-                flash("That email address is already in use.", "error")
-            else:
-                with database.cursor() as cursor:
-                    cursor.execute(
-                        "INSERT INTO users (name, email, password_hash, role) "
-                        "VALUES (%s, %s, %s, 'customer')",
-                        (name, email, generate_password_hash(password)),
-                    )
-                    # The previous insert also saved username, which is disabled for now.
-                    # cursor.execute("INSERT INTO users (name, username, email, password_hash, role) VALUES (%s, %s, %s, %s, 'customer')", (name, username, email, generate_password_hash(password)))
-                database.commit()
-                flash("Your account is ready. You can log in now.", "success")
-                return redirect(url_for("auth.login"))
-
-    return render_template("auth/register.html")
-
-
-@auth_bp.route("/check-email", methods=("POST",))
-def check_email():
-    """Check an email address while someone fills out the registration form."""
-    form_data = request.get_json(silent=True) or {}
-    if not isinstance(form_data, dict):
-        return jsonify({"valid": False})
-
-    email = form_data.get("email", "")
-    if not isinstance(email, str):
-        return jsonify({"valid": False})
-
-    return jsonify({"valid": is_valid_email(email)})
-
-
-@auth_bp.route("/login", methods=("GET", "POST"))
+# This decorator connects the function to GET /login and POST /login.
+@auth.route('/login', methods=('GET', 'POST'))
 def login():
-    """Check the submitted email and password, then start a session."""
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
+    # GET displays the form; POST means the form was submitted.
+    if request.method == 'POST':
+        # Read the email, remove surrounding spaces, and lowercase it for consistent matching.
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')  # Do not trim passwords; their contents matter.
+        # Hold the lock while loading accounts so a write cannot happen at the same time.
+        with users_lock:
+            users = load_users()
+        # Find the matching account; next(..., None) returns None if no account matches.
+        user = next((item for item in users if item.get('email') == email), None)
 
-        with get_db().cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-            user = cursor.fetchone()
-
-        if user is None or not check_password_hash(user["password_hash"], password):
-            flash("Email or password is incorrect.", "error")
+        # Reject a missing account or a password that does not match the saved hash.
+        if user is None or not check_password_hash(user.get('password_hash', ''), password):
+            flash('Email or password is incorrect.', 'error')  # Show a one-time error on the page.
         else:
-            start_user_session(user)
-            flash("Welcome back!", "success")
-
-            if user["role"] == "admin":
-                return redirect(url_for("admin.dashboard"))
-            if user["role"] == "staff":
-                return redirect(url_for("staff.dashboard"))
-            return redirect(url_for("user.dashboard"))
-
-    return render_template("auth/login.html")
+            session.clear()  # Remove any old user's session information.
+            session['user_id'] = user['id']  # Store the account ID in Flask's signed session.
+            session['user_name'] = user['name']  # Used for the greeting in the navigation bar.
+            session['user_role'] = user['role']  # Saved for role-based features.
+            flash('Welcome back!', 'success')
+            return redirect(url_for('customer_bp.index'))  # Go to the customer home page.
+    # Display the login template on first visit or after an unsuccessful login.
+    return render_template('auth/login.html')
 
 
-@auth_bp.route("/logout", methods=("POST",))
+# This decorator connects the function to GET /register and POST /register.
+@auth.route('/register', methods=('GET', 'POST'))
+def register():
+    if request.method == 'POST':  # Only process account data after the form is submitted.
+        name = request.form.get('name', '')  # Read the full name, or use empty text if missing.
+        email = request.form.get('email', '').strip().lower()  # Normalize email for duplicate checks.
+        password = request.form.get('password', '')
+        confirmation = request.form.get('confirm_password', '')
+        error = _registration_error(name, email, password, confirmation)  # Run server-side validation.
+
+        if error:  # A non-empty error string means a validation rule failed.
+            flash(error, 'error')
+        else:
+            # Keep the duplicate check and save together to avoid same-process races.
+            with users_lock:
+                users = load_users()  # Read the existing account records.
+                if any(item.get('email') == email for item in users):  # True if this email is already taken.
+                    flash('That email address is already in use.', 'error')
+                else:
+                    # Add a new record; the raw password is never written to JSON.
+                    users.append({
+                        'id': str(uuid.uuid4()),  # Generate a unique account ID.
+                        'name': name,
+                        'email': email,
+                        'password_hash': generate_password_hash(password),  # Save a one-way hash, not the password.
+                        'role': 'customer',  # Public registration creates customer accounts.
+                    })
+                    _save_users(users)  # Persist the updated list in users.json.
+                    flash('Your account is ready. You can log in now.', 'success')
+                    return redirect(url_for('auth.login'))  # Send the user to the login page.
+    # Display the form on first visit or when submitted data failed validation.
+    return render_template('auth/register.html')
+
+
+# Only accept POST for logout; loading a page/link should not log someone out by accident.
+@auth.route('/logout', methods=('POST',))
 def logout():
-    """End the current login session."""
-    # Removing these values logs the user out.
-    session.clear()
-    flash("You have been logged out.", "success")
-    return redirect(url_for("auth.login"))
+    session.clear()  # Remove the current user's signed-in session data.
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('customer_bp.index'))  # Return to the customer home page.
 
 
-def role_required(required_role):
-    """Make sure a user has the required role before opening a page."""
-    def decorator(view_function):
-        # wraps keeps the protected page's original name and details.
-        @wraps(view_function)
-        def wrapped_view(*args, **kwargs):
-            # This wrapper runs before the protected page's own function.
-            if "user_id" not in session:
-                flash("Please log in to continue.", "error")
-                return redirect(url_for("auth.login"))
-            if session.get("user_role") != required_role:
-                flash("You do not have permission to view that page.", "error")
-                return redirect(url_for("index"))
-            return view_function(*args, **kwargs)
-        return wrapped_view
-    return decorator
+# The registration-page JavaScript sends an email here for an immediate format/provider check.
+@auth.route('/check-email', methods=('POST',))
+def check_email():
+    payload = request.get_json(silent=True) or {}  # Parse JSON; use an empty dictionary if absent/invalid.
+    # Read the email only when the JSON body is an object (Python represents it as a dict).
+    email = payload.get('email', '') if isinstance(payload, dict) else ''
+    valid = _is_valid_email(email)  # Use the same validation as account registration.
+    return jsonify({'valid': bool(valid)})  # Send a JSON true/false result back to the browser.

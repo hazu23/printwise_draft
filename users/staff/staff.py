@@ -1,22 +1,7 @@
-from flask import render_template
-from users import staff_bp
-from users.auth import role_required
+from flask import Blueprint, render_template
 
+staff_bp = Blueprint('staff_bp', __name__, template_folder="templates", static_folder="static", url_prefix='/staff')
 
-@staff_bp.route("/dashboard")
-@role_required("staff")
-def dashboard():
-    return render_template("staff/dashboard.html")
-
-
-@staff_bp.route("/orders")
-@role_required("staff")
-def orders():
-    return render_template("staff/orders.html")
-
-
-
-
-
-
-
+@staff_bp.route('/')
+def index():
+    return render_template("staff_dashboard.html")

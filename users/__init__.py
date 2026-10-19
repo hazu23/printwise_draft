@@ -1,33 +1,18 @@
-from flask import Blueprint
+from flask import Flask
+import secrets
 
-auth_bp = Blueprint("auth", __name__)
+def create_app():
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = secrets.token_hex(32)
 
-admin_bp = Blueprint(
-    "admin",
-    __name__,
-    url_prefix="/admin",
-    template_folder="admin/templates",
-    static_folder="admin/static",
-)
+    from users.auth import auth
+    from users.customer.customer import customer_bp
+    from users.staff.staff import staff_bp
+    from users.admin.admin import admin_bp
 
-staff_bp = Blueprint(
-    "staff",
-    __name__,
-    url_prefix="/staff",
-    template_folder="staff/templates",
-    static_folder="staff/static",
-)
+    app.register_blueprint(auth)
+    app.register_blueprint(customer_bp)
+    app.register_blueprint(staff_bp)
+    app.register_blueprint(admin_bp)
 
-user_bp = Blueprint(
-    "user",
-    __name__,
-    url_prefix="/user",
-    template_folder="user/templates",
-    static_folder="user/static",
-)
-
-# Import route modules after creating the Blueprints so their decorators
-# register routes on the objects above.
-from users.admin import admin  # noqa: E402,F401
-from users.staff import staff  # noqa: E402,F401
-from users.user import user  # noqa: E402,F401
+    return app
