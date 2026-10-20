@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from users.__init__ import create_app
+from users import create_app
 
 app = Flask(__name__)
 

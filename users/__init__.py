@@ -1,17 +1,23 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from users import models
 import os
 import secrets
 
 db = SQLAlchemy()
-DB_NAME = "database.db"
+
+# MySQL connection for XAMPP. Format: mysql+pymysql://username:password@host/database_name
+# XAMPP's default is user "root" with no password, so the password part is empty.
+# Create a database named "printwise" in phpMyAdmin before running the app.
+DATABASE_URL = "mysql+pymysql://root:@localhost/printwise"
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = secrets.token_hex(32)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", f"sqlite:///{DB_NAME}",)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", DATABASE_URL)
     db.init_app(app)
+
+    from users import models
+
     with app.app_context():
         db.create_all()
 
