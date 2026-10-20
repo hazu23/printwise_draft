@@ -1,9 +1,19 @@
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from users import models
+import os
 import secrets
+
+db = SQLAlchemy()
+DB_NAME = "database.db"
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = secrets.token_hex(32)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", f"sqlite:///{DB_NAME}",)
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
     from users.auth import auth
     from users.customer.customer import customer_bp
