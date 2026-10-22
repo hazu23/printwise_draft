@@ -8,11 +8,11 @@ class Account(db.Model):
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # customer, staff, or owner
+    role = db.Column(db.String(20), nullable=False)  # customer, staff, or admin
 
     customer = db.relationship("Customer", back_populates="account", uselist=False)
     staff = db.relationship("Staff", back_populates="account", uselist=False)
-    owner = db.relationship("Owner", back_populates="account", uselist=False)
+    admin = db.relationship("Admin", back_populates="account", uselist=False)
 
 
 class Customer(db.Model):
@@ -21,20 +21,19 @@ class Customer(db.Model):
     account_id = db.Column(
         db.Integer, db.ForeignKey("accounts.id"), primary_key=True
     )
-    phone = db.Column(db.String(30))
 
     account = db.relationship("Account", back_populates="customer")
 
 
-class Owner(db.Model):
-    __tablename__ = "owners"
+class Admin(db.Model):
+    __tablename__ = "admin"
 
     account_id = db.Column(
         db.Integer, db.ForeignKey("accounts.id"), primary_key=True
     )
 
-    account = db.relationship("Account", back_populates="owner")
-    printshops = db.relationship("PrintShop", back_populates="owner")
+    account = db.relationship("Account", back_populates="admin")
+    printshops = db.relationship("PrintShop", back_populates="admin")
 
 
 class PrintShop(db.Model):
@@ -43,11 +42,11 @@ class PrintShop(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     location = db.Column(db.String(255), nullable=False)
-    owner_account_id = db.Column(
-        db.Integer, db.ForeignKey("owners.account_id"), nullable=False
+    admin_account_id = db.Column(
+        db.Integer, db.ForeignKey("admin.account_id"), nullable=False
     )
 
-    owner = db.relationship("Owner", back_populates="printshops")
+    admin = db.relationship("Admin", back_populates="printshops")
     staff_members = db.relationship("Staff", back_populates="printshop")
 
 

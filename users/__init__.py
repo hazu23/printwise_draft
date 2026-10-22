@@ -5,10 +5,7 @@ import secrets
 
 db = SQLAlchemy()
 
-# MySQL connection for XAMPP. Format: mysql+pymysql://username:password@host/database_name
-# XAMPP's default is user "root" with no password, so the password part is empty.
-# Create a database named "printwise" in phpMyAdmin before running the app.
-DATABASE_URL = "mysql+pymysql://root:@localhost/printwise"
+DATABASE_URL = "mysql+pymysql://printwise:printwise123@localhost/printwisedb"
 
 def create_app():
     app = Flask(__name__)

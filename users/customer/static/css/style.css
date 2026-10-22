@@ -77,7 +77,7 @@ body {
     grid-template-columns: 1.1fr 0.9fr;
     align-items: center;
     gap: 3rem;
-    padding: clamp(2rem, 6vw, 5rem);
+    padding: clamp(2rem, 4vw, 3.5rem);
     overflow: hidden;
     border: 1px solid #e3e8ef;
     border-radius: 1.25rem;
@@ -238,6 +238,10 @@ body {
     color: var(--bright-coral);
     font-size: 0.85rem;
     font-weight: 700;
+}
+
+.home-steps h2.home-label {
+    font-size: 0.9rem;
 }
 
 @media (max-width: 767.98px) {
