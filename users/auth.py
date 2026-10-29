@@ -19,7 +19,7 @@ Allowed_Emails = {
     'yahoo.com', 'yahoo.co.uk', 'yahoo.ca', 'yahoo.com.au', 'ymail.com', 'rocketmail.com',
     'icloud.com', 'me.com', 'mac.com',
     'aol.com', 'proton.me', 'protonmail.com', 'gmx.com', 'gmx.net', 'mail.com',
-    'zoho.com', 'fastmail.com', 'hey.com', 'tuta.com', 'tutanota.com', 'yandex.com', 'yandex.ru',
+    'zoho.com', 'fastmail.com', 'hey.com', 'tuta.com', 'tutanota.com', 'yandex.com', 'yandex.ru', 'lu.edu.ph', 'deped.gov.ph',
 }
 
 
@@ -80,6 +80,8 @@ def login():
             session['user_name'] = account.full_name
             session['user_role'] = account.role
             flash('Welcome back!', 'success')
+            if account.role == 'customer':
+                return redirect(url_for('customer_bp.printshops'))
             return redirect(url_for('customer_bp.index'))
     return render_template('auth/login.html')
 
@@ -137,3 +139,4 @@ def check_email():
     email = payload.get('email', '') if isinstance(payload, dict) else ''
     valid = _is_valid_email(email)
     return jsonify({'valid': bool(valid)})
+

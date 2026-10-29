@@ -1,6 +1,5 @@
 from . import db
 
-
 class Account(db.Model):
     __tablename__ = "accounts"
 
@@ -42,8 +41,9 @@ class PrintShop(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     location = db.Column(db.String(255), nullable=False)
+    logo_path = db.Column(db.String(255), nullable=True)
     admin_account_id = db.Column(
-        db.Integer, db.ForeignKey("admin.account_id"), nullable=False
+        db.Integer, db.ForeignKey("admin.account_id"), nullable=True
     )
 
     admin = db.relationship("Admin", back_populates="printshops")

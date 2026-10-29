@@ -1,7 +1,22 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, flash, redirect, render_template, session, url_for
 
-customer_bp = Blueprint('customer_bp', __name__, template_folder="templates", static_folder="static", static_url_path="/users/customer/static")
+from users.models import PrintShop
+
+customer_bp = Blueprint('customer_bp', __name__, template_folder='templates', static_folder='static', static_url_path='/users/customer/static')
+
 
 @customer_bp.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
+
+
+@customer_bp.route('/printshops')
+def printshops():
+    # Require a signed-in account before allowing access to the directory.
+    if 'user_id' not in session:
+        flash('Please log in to browse printshops.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Fetch every printshop from the database, ordered by name for easy browsing.
+    printshops = PrintShop.query.order_by(PrintShop.name.asc()).all()
+    return render_template('printshops.html', printshops=printshops)

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Printshops | PrintWise{% endblock %}
+
+{% block content %}
+<section class="printshop-directory" aria-labelledby="printshop-heading">
+    <header class="printshop-heading">
+        <div>
+            <p class="home-label">PRINTWISE DIRECTORY</p>
+            <h1 id="printshop-heading">Browse Printshops</h1>
+            <p class="text-secondary mb-0">Explore local printshops and find one for your next project.</p>
+        </div>
+    </header>
+
+    {% if printshops %}
+        <p class="printshop-count text-secondary">{{ printshops|length }} printshop{{ 's' if printshops|length != 1 else '' }} listed</p>
+        <div class="row g-3">
+            {% for shop in printshops %}
+                <div class="col-sm-6 col-xl-4">
+                    <article class="printshop-card h-100">
+                        {% if shop.logo_path %}
+                            <img class="printshop-card-logo" src="{{ url_for('customer_bp.static', filename=shop.logo_path) }}" alt="{{ shop.name }} logo">
+                        {% else %}
+                            <div class="printshop-card-icon" aria-hidden="true">P</div>
+                        {% endif %}
+                        <h2 class="h5">{{ shop.name }}</h2>
+                        <p class="printshop-location mb-0">
+                            <span aria-hidden="true">⌖</span>
+                            <span>{{ shop.location }}</span>
+                        </p>
+                    </article>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="printshop-empty">
+            <h2 class="h5">No printshops are listed yet</h2>
+            <p class="text-secondary mb-0">Check back later when printshops join PrintWise.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+
