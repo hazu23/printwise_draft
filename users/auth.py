@@ -63,6 +63,17 @@ def _registration_error(name, email, password, confirmation):
 # This connects the function to GET /login and POST /login.
 @auth.route('/login', methods=('GET', 'POST'))
 def login():
+    # A signed-in user should not see the login form again.
+    if 'user_id' in session:
+        role = session.get('user_role')
+        if role == 'customer':
+            return redirect(url_for('customer_bp.printshops'))
+        if role == 'staff':
+            return redirect(url_for('staff_bp.index'))
+        if role == 'admin':
+            return redirect(url_for('admin_bp.index'))
+        return redirect(url_for('customer_bp.index'))
+
     # GET shows the form. POST means the form was submitted.
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()

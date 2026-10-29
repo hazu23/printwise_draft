@@ -19,7 +19,4 @@ body { background: var(--soft-gray); color: var(--ink-navy); }
 .auth-submit span { font-size: 15px; }
 .auth-switch { margin: 18px 0 0; text-align: center; color: var(--slate); font-size: 10px; }
 .auth-switch a { color: var(--print-blue); font-weight: 700; text-decoration: none; }
-.flash-message { margin: 0 auto 15px; max-width: 870px; padding: 10px 13px; border-radius: 7px; font-size: 12px; }
-.flash-message.error { background: #fff0ed; color: #a34036; }
-.flash-message.success { background: #eaf7f4; color: #1e7568; }
 @media (max-width: 700px) { .auth-layout { grid-template-columns: 1fr; gap: 22px; min-height: auto; padding: 25px 8px; }.auth-intro h1 { max-width: 450px; font-size: 33px; }.auth-intro > p { margin-bottom: 10px; }.auth-note { margin-top: 15px; }.auth-card { padding: 23px; } }

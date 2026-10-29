@@ -21,7 +21,7 @@
                         {% if shop.logo_path %}
                             <img class="printshop-card-logo" src="{{ url_for('customer_bp.static', filename=shop.logo_path) }}" alt="{{ shop.name }} logo">
                         {% else %}
-                            <div class="printshop-card-icon" aria-hidden="true">P</div>
+                            <div class="printshop-card-icon" aria-hidden="true">{{ shop.name[0]|upper }}</div>
                         {% endif %}
                         <h2 class="h5">{{ shop.name }}</h2>
                         <p class="printshop-location mb-0">

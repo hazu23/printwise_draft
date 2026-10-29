@@ -31,6 +31,24 @@ body {
     color: var(--slate) !important;
 }
 
+.flash-message {
+    margin: 0 auto 15px;
+    max-width: 870px;
+    padding: 10px 13px;
+    border-radius: 7px;
+    font-size: 12px;
+}
+
+.flash-message.error {
+    background: #fff0f0;
+    color: #7f1d1d;
+}
+
+.flash-message.success {
+    background: #eaf7ec;
+    color: #1f5129;
+}
+
 .btn-primary {
     --bs-btn-bg: var(--print-blue);
     --bs-btn-border-color: var(--print-blue);
@@ -251,7 +269,12 @@ body {
     }
 
     .home-art {
-        min-height: 16rem;
+        /* Leave room below the printer for the caption on narrow screens. */
+        min-height: 19rem;
+    }
+
+    .home-art-caption {
+        bottom: 0.85rem;
     }
 }
 
