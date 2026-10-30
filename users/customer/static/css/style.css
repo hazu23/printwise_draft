@@ -321,6 +321,47 @@ body {
     box-shadow: 0 0.75rem 1.75rem #18324b12;
 }
 
+.printshop-card-trigger {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+}
+
+.printshop-card-trigger:focus-visible {
+    border-radius: 0.5rem;
+    outline: 3px solid var(--print-blue);
+    outline-offset: 4px;
+}
+
+.printshop-card-name {
+    display: block;
+    margin: 0 0 0.65rem;
+    color: var(--ink-navy);
+}
+
+.printshop-card-hint {
+    margin-top: 1rem;
+    color: var(--print-blue);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.printshop-card-hint span {
+    display: inline-block;
+    transition: transform 150ms ease;
+}
+
+.printshop-card-trigger:hover .printshop-card-hint span {
+    transform: translateX(3px);
+}
+
 .printshop-card-logo {
     display: block;
     width: 3.5rem;
@@ -366,6 +407,95 @@ body {
     border-radius: 0.9rem;
     background: #fff;
     text-align: center;
+}
+
+.printshop-modal-content {
+    border: 1px solid #e3e8ef;
+    border-radius: 1rem;
+}
+
+.printshop-modal-logo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    object-fit: contain;
+}
+
+.printshop-modal-header {
+    position: relative;
+    padding-right: 4rem;
+}
+
+.printshop-modal-header .btn-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    margin: 0;
+}
+
+.printshop-modal-section + .printshop-modal-section {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e3e8ef;
+}
+
+.printshop-modal-section h3 {
+    color: var(--ink-navy);
+}
+
+.printshop-modal-service-list {
+    display: grid;
+    gap: 0.75rem;
+    padding-left: 1.1rem;
+}
+
+.printshop-modal-service-list li::marker {
+    color: var(--print-blue);
+}
+
+.printshop-modal-service-list strong {
+    color: var(--ink-navy);
+    font-weight: 600;
+}
+
+.printshop-modal-service-list small {
+    display: block;
+    color: var(--slate);
+}
+
+.printshop-modal-contact > div {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+}
+
+.printshop-modal-contact dt {
+    color: var(--slate);
+    font-weight: 500;
+}
+
+.printshop-modal-contact dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.printshop-modal-contact a {
+    color: var(--print-blue);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.printshop-modal-contact a:hover {
+    color: #2858c4;
+}
+
+.printshop-modal-contact a:focus-visible {
+    border-radius: 0.2rem;
+    outline: 2px solid var(--print-blue);
+    outline-offset: 2px;
 }
 
 @media (max-width: 575.98px) {

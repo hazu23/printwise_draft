@@ -8,26 +8,40 @@
         <div>
             <p class="home-label">PRINTWISE DIRECTORY</p>
             <h1 id="printshop-heading">Browse Printshops</h1>
-            <p class="text-secondary mb-0">Explore local printshops and find one for your next project.</p>
+            <p class="text-secondary mb-0">Explore local printshops and find one for your next print request.</p>
         </div>
     </header>
 
-    {% if printshops %}
-        <p class="printshop-count text-secondary">{{ printshops|length }} printshop{{ 's' if printshops|length != 1 else '' }} listed</p>
+    {% if shop_cards %}
+        <p class="printshop-count text-secondary">{{ shop_cards|length }} printshop{{ 's' if shop_cards|length != 1 else '' }} listed</p>
         <div class="row g-3">
-            {% for shop in printshops %}
+            {% for card in shop_cards %}
+                {% set shop = card.shop %}
                 <div class="col-sm-6 col-xl-4">
                     <article class="printshop-card h-100">
-                        {% if shop.logo_path %}
-                            <img class="printshop-card-logo" src="{{ url_for('customer_bp.static', filename=shop.logo_path) }}" alt="{{ shop.name }} logo">
-                        {% else %}
-                            <div class="printshop-card-icon" aria-hidden="true">{{ shop.name[0]|upper }}</div>
-                        {% endif %}
-                        <h2 class="h5">{{ shop.name }}</h2>
-                        <p class="printshop-location mb-0">
-                            <span aria-hidden="true">⌖</span>
-                            <span>{{ shop.location }}</span>
-                        </p>
+                        <button class="printshop-card-trigger" type="button"
+                                data-bs-toggle="modal" data-bs-target="#printshop-details-modal"
+                                data-shop-name="{{ shop.name }}"
+                                data-description="{{ shop.description or '' }}"
+                                data-location="{{ shop.location }}"
+                                data-contact-phone="{{ shop.contact_phone or '' }}"
+                                data-contact-email="{{ shop.contact_email or '' }}"
+                                data-website="{{ shop.website or '' }}"
+                                data-business-hours="{{ shop.business_hours or '' }}"
+                                data-logo-url="{{ url_for('customer_bp.static', filename=shop.logo_path) if shop.logo_path else '' }}"
+                                data-services="{{ card.services|tojson|forceescape }}">
+                            {% if shop.logo_path %}
+                                <img class="printshop-card-logo" src="{{ url_for('customer_bp.static', filename=shop.logo_path) }}" alt="">
+                            {% else %}
+                                <span class="printshop-card-icon" aria-hidden="true">{{ shop.name[0]|upper }}</span>
+                            {% endif %}
+                            <span class="printshop-card-name h5">{{ shop.name }}</span>
+                            <span class="printshop-location">
+                                <span aria-hidden="true">⌖</span>
+                                <span>{{ shop.location }}</span>
+                            </span>
+                            <span class="printshop-card-hint">View shop details <span aria-hidden="true">→</span></span>
+                        </button>
                     </article>
                 </div>
             {% endfor %}
@@ -39,5 +53,55 @@
         </div>
     {% endif %}
 </section>
+
+<div class="modal fade" id="printshop-details-modal" tabindex="-1" aria-labelledby="printshop-modal-name" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content printshop-modal-content">
+            <div class="modal-header printshop-modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <img id="printshop-modal-logo" class="printshop-modal-logo d-none" alt="">
+                    <span id="printshop-modal-initial" class="printshop-card-icon mb-0" aria-hidden="true"></span>
+                    <div>
+                        <h2 class="modal-title h5 mb-1" id="printshop-modal-name"></h2>
+                        <p class="text-secondary small mb-0" id="printshop-modal-location"></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <section class="printshop-modal-section" aria-labelledby="printshop-modal-about-heading">
+                    <h3 class="h6" id="printshop-modal-about-heading">About this printshop</h3>
+                    <p id="printshop-modal-description" class="text-secondary mb-0"></p>
+                </section>
+                <section class="printshop-modal-section" aria-labelledby="printshop-modal-services-heading">
+                    <h3 class="h6" id="printshop-modal-services-heading">Services and products</h3>
+                    <ul id="printshop-modal-services" class="printshop-modal-service-list mb-0"></ul>
+                </section>
+                <section class="printshop-modal-section" aria-labelledby="printshop-modal-contact-heading">
+                    <h3 class="h6" id="printshop-modal-contact-heading">Contact and hours</h3>
+                    <dl class="printshop-modal-contact mb-0">
+                        <div id="printshop-phone-row" class="d-none"><dt>Phone</dt><dd><a id="printshop-modal-phone"></a></dd></div>
+                        <div id="printshop-email-row" class="d-none"><dt>Email</dt><dd><a id="printshop-modal-email"></a></dd></div>
+                        <div id="printshop-website-row" class="d-none"><dt>Website</dt><dd><a id="printshop-modal-website" target="_blank" rel="noopener noreferrer"></a></dd></div>
+                        <div id="printshop-hours-row" class="d-none"><dt>Hours</dt><dd id="printshop-modal-hours"></dd></div>
+                    </dl>
+                    <p id="printshop-modal-no-contact" class="text-secondary small mb-0">Contact details have not been added yet.</p>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <div class="w-100">
+                    <button type="button" class="btn btn-primary w-100" id="printshop-request-button">
+                        Request a print
+                    </button>
+                    <p id="printshop-request-note" class="text-secondary small text-center mt-2 mb-0 d-none" role="status" aria-live="polite"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('customer_bp.static', filename='js/printshops.js') }}"></script>
 {% endblock %}
 
