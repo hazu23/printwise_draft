@@ -6,15 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Short helper for finding an element inside this modal by its ID.
     const get = (id) => modal.querySelector(`#${id}`);
-    const requestButton = get('printshop-request-button');
-    const requestNote = get('printshop-request-note');
-
-    // The request feature is not built yet, so the button displays a clear placeholder message.
-    requestButton.addEventListener('click', () => {
-        const shopName = get('printshop-modal-name').textContent;
-        requestNote.textContent = `The request form and customization options for ${shopName} are coming soon.`;
-        requestNote.classList.remove('d-none');
-    });
+    const requestLink = get('printshop-request-link');
 
     // Show a phone or email contact row only when that shop has a value for it.
     function setContact(rowId, linkId, value, scheme) {
@@ -39,16 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bootstrap sends this event when a customer opens a printshop's details modal.
     modal.addEventListener('show.bs.modal', (event) => {
-        // Clear the placeholder message each time a different shop is opened.
-        requestNote.textContent = '';
-        requestNote.classList.add('d-none');
-
         // The clicked directory card supplies this shop's details in data-* attributes.
         const card = event.relatedTarget;
         if (!card) return;
 
         // Fill the modal's heading and basic information, with a fallback for missing values.
         const name = card.dataset.shopName || 'Printshop';
+        requestLink.href = card.dataset.requestUrl || '#';
         get('printshop-modal-name').textContent = name;
         get('printshop-modal-location').textContent = card.dataset.location || 'Location not added yet';
         get('printshop-modal-description').textContent =

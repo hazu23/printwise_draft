@@ -17,6 +17,8 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = secrets.token_hex(32)
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", DATABASE_URL)
+    # Limit uploaded request attachments to 16 MB.
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
     # Attach SQLAlchemy to this Flask app so models and routes can use the DB.
     db.init_app(app)

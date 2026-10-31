@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Request a Print | PrintWise{% endblock %}
+
+{% block content %}
+<section class="print-request-page" aria-labelledby="request-heading">
+    <a class="request-back-link" href="{{ url_for('customer_bp.printshops') }}">← Back to printshops</a>
+
+    <header class="request-page-heading">
+        <p class="home-label">{{ shop.name }}</p>
+        <h1 id="request-heading">Request a print</h1>
+        <p class="text-secondary mb-0">Choose a service and tell the printshop what you need.</p>
+    </header>
+
+    <form class="request-form" method="post" enctype="multipart/form-data">
+        <div class="request-form-field">
+            <label for="request-service">Service</label>
+            <select id="request-service" name="service_id" class="form-select" required>
+                <option value="">Choose a service</option>
+                {% for service in services %}
+                    <option value="{{ service.id }}" {% if selected_service_id == service.id %}selected{% endif %}>
+                        {{ service.name }}{% if service.category == 'product' %} (custom product){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <p id="request-service-description" class="request-service-description text-secondary" aria-live="polite"></p>
+        <div id="request-custom-options" class="request-custom-options"></div>
+
+        <div class="request-form-field">
+            <label for="request-quantity">Quantity</label>
+            <input id="request-quantity" name="quantity" class="form-control" type="number" min="1" step="1" required value="{{ request.form.get('quantity', '1') }}">
+        </div>
+
+        <div class="request-form-field">
+            <label for="request-files">Upload files</label>
+            <input id="request-files" name="print_files" class="form-control" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple required>
+            <small class="request-field-help">Choose a file to print. Accepted: PDF, DOC, DOCX, JPG, or PNG.</small>
+        </div>
+
+        <div class="request-form-field">
+            <label for="request-notes">Additional instructions <span class="request-optional">(optional)</span></label>
+            <textarea id="request-notes" name="notes" class="form-control" rows="4" maxlength="4000" placeholder="Add any details the printshop should know.">{{ request.form.get('notes', '') }}</textarea>
+        </div>
+
+        <p class="request-price-note">Prices may vary. The printshop will confirm the price after reviewing your request.</p>
+
+        <div class="request-form-actions">
+            <a class="btn btn-outline-secondary" href="{{ url_for('customer_bp.printshops') }}">Cancel</a>
+            <button class="btn btn-primary" type="submit">Send print request</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="request-service-options" type="application/json">{{ service_options|tojson }}</script>
+<script id="request-selected-options" type="application/json">{{ selected_options|tojson }}</script>
+<script src="{{ url_for('customer_bp.static', filename='js/request_form.js') }}"></script>
+{% endblock %}

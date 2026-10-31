@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Request Sent | PrintWise{% endblock %}
+
+{% block content %}
+<section class="request-confirmation" aria-labelledby="request-confirmation-heading">
+    <div class="request-confirmation-mark" aria-hidden="true">✓</div>
+    <p class="home-label">REQUEST #{{ print_request.id }}</p>
+    <h1 id="request-confirmation-heading">Your request was sent</h1>
+    <p class="text-secondary">{{ print_request.printshop.name }} will review your request and confirm the price.</p>
+
+    <dl class="request-confirmation-details">
+        <div><dt>Service</dt><dd>{{ print_request.service.name }}</dd></div>
+        <div><dt>Quantity</dt><dd>{{ print_request.quantity }}</dd></div>
+        <div><dt>Files</dt><dd>{{ print_request.file_paths|length }} attached</dd></div>
+        <div><dt>Status</dt><dd><span class="request-status">{{ print_request.status|title }}</span></dd></div>
+        {% for key, value in print_request.selected_options.items() %}
+            {% if value %}
+                <div><dt>{{ key|replace('_', ' ')|title }}</dt><dd>{{ value }}</dd></div>
+            {% endif %}
+        {% endfor %}
+    </dl>
+
+    <a class="btn btn-primary" href="{{ url_for('customer_bp.printshops') }}">Back to printshops</a>
+</section>
+{% endblock %}

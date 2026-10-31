@@ -96,6 +96,33 @@ class PrintShopServices(db.Model):
     printshop = db.relationship("PrintShop", back_populates="offerings")
 
 
+class PrintRequest(db.Model):
+    """A customer's request for one service from one printshop."""
+
+    __tablename__ = "print_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    customer_account_id = db.Column(
+        db.Integer, db.ForeignKey("accounts.id"), nullable=False
+    )
+    printshop_id = db.Column(
+        db.Integer, db.ForeignKey("printshops.id"), nullable=False
+    )
+    service_id = db.Column(
+        db.Integer, db.ForeignKey("printshops_services.id"), nullable=False
+    )
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    selected_options = db.Column(db.JSON, nullable=False, default=dict)
+    file_paths = db.Column(db.JSON, nullable=False, default=list)
+    notes = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+
+    customer = db.relationship("Account")
+    printshop = db.relationship("PrintShop")
+    service = db.relationship("PrintShopServices")
+
+
 class Staff(db.Model):
     # A staff row links an account to the printshop where that person works.
     __tablename__ = "staff"

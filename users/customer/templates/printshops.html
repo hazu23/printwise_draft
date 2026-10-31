@@ -29,6 +29,7 @@
                                 data-website="{{ shop.website or '' }}"
                                 data-business-hours="{{ shop.business_hours or '' }}"
                                 data-logo-url="{{ url_for('customer_bp.static', filename=shop.logo_path) if shop.logo_path else '' }}"
+                                data-request-url="{{ url_for('customer_bp.new_print_request', shop_id=shop.id) }}"
                                 data-services="{{ card.services|tojson|forceescape }}">
                             {% if shop.logo_path %}
                                 <img class="printshop-card-logo" src="{{ url_for('customer_bp.static', filename=shop.logo_path) }}" alt="">
@@ -90,10 +91,8 @@
             </div>
             <div class="modal-footer">
                 <div class="w-100">
-                    <button type="button" class="btn btn-primary w-100" id="printshop-request-button">
-                        Request a print
-                    </button>
-                    <p id="printshop-request-note" class="text-secondary small text-center mt-2 mb-0 d-none" role="status" aria-live="polite"></p>
+                    <a class="btn btn-primary w-100" id="printshop-request-link" href="#">Request a print</a>
+                    <p class="text-secondary small text-center mt-2 mb-0">Choose a service and customize your request on the next page.</p>
                 </div>
             </div>
         </div>

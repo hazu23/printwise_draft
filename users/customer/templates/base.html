@@ -10,9 +10,18 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg bg-white border-bottom">
-        <div class="container">
+        <div class="container printwise-nav-container">
             <a class="navbar-brand fw-bold" href="{{ url_for('customer_bp.index') }}">PrintWise</a>
-            <div class="ms-auto d-flex align-items-center gap-3">
+            {% if session.get('user_id') %}
+                <div class="printshops-nav-slot">
+                    <a class="nav-link printshops-nav-link {% if request.endpoint == 'customer_bp.printshops' %}active{% endif %}"
+                       href="{{ url_for('customer_bp.printshops') }}"
+                       {% if request.endpoint == 'customer_bp.printshops' %}aria-current="page"{% endif %}>
+                        Printshops
+                    </a>
+                </div>
+            {% endif %}
+            <div class="ms-auto d-flex align-items-center gap-3 printwise-nav-actions">
                 {% if session.get('user_id') %}
                     <span class="small text-secondary">Hi, {{ session.get('user_name') }}</span>
                     <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">

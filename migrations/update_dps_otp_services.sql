@@ -1,0 +1,3 @@
+UPDATE printshops_services AS service JOIN printshops AS shop ON shop.id = service.printshop_id SET service.name = 'Photocopy/Xerox' WHERE shop.name = 'Dan''s Printing Services' AND service.name = 'Photocopy';
+UPDATE printshops_services AS service JOIN printshops AS shop ON shop.id = service.printshop_id SET service.name = 'Print' WHERE shop.name = 'On The Print' AND service.name = 'Print/Xerox';
+INSERT INTO printshops_services (printshop_id, name, category, is_active) SELECT shop.id, 'Photocopy/Xerox', 'service', 1 FROM printshops AS shop WHERE shop.name = 'On The Print' AND NOT EXISTS (SELECT 1 FROM printshops_services AS existing WHERE existing.printshop_id = shop.id AND LOWER(existing.name) = 'photocopy/xerox');
