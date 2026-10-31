@@ -1,3 +1,4 @@
+/* Shared color tokens used across the landing page and printshop directory. */
 :root {
     --ink-navy: #18324b;
     --print-blue: #356ae6;
@@ -14,11 +15,13 @@
     --bs-body-bg: var(--soft-gray);
 }
 
+/* Base text and background colors for pages that load style.css. */
 body {
     background: var(--soft-gray);
     color: var(--ink-navy);
 }
 
+/* PrintWise brand in the shared top navigation bar. */
 .navbar-brand {
     color: var(--ink-navy);
 }
@@ -27,10 +30,12 @@ body {
     color: var(--print-blue);
 }
 
+/* Keep Bootstrap's secondary text color aligned with the PrintWise palette. */
 .text-secondary {
     color: var(--slate) !important;
 }
 
+/* Flash notices used for login, registration, and access messages. */
 .flash-message {
     margin: 0 auto 15px;
     max-width: 870px;
@@ -49,6 +54,7 @@ body {
     color: #1f5129;
 }
 
+/* Override Bootstrap primary buttons with the PrintWise blue. */
 .btn-primary {
     --bs-btn-bg: var(--print-blue);
     --bs-btn-border-color: var(--print-blue);
@@ -60,6 +66,7 @@ body {
     --bs-btn-disabled-border-color: var(--print-blue);
 }
 
+/* Outline buttons used for secondary actions in the shared navigation and landing page. */
 .btn-outline-secondary {
     --bs-btn-color: var(--slate);
     --bs-btn-border-color: #cbd5df;
@@ -68,6 +75,7 @@ body {
     --bs-btn-hover-color: var(--paper-white);
 }
 
+/* Reusable linked-card style for dashboard navigation cards. */
 .dashboard-card {
     display: block;
     height: 100%;
@@ -90,6 +98,7 @@ body {
     color: var(--slate);
 }
 
+/* Landing page: hero layout, headline, description, and calls to action. */
 .home-hero {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -141,6 +150,7 @@ body {
     font-size: 0.9rem;
 }
 
+/* Landing page: CSS-built printer illustration and its caption. */
 .home-art {
     position: relative;
     display: grid;
@@ -238,6 +248,7 @@ body {
     text-align: center;
 }
 
+/* Landing page: numbered "Getting started" cards. */
 .home-steps {
     padding: 4rem 0 1rem;
 }
@@ -262,6 +273,7 @@ body {
     font-size: 0.9rem;
 }
 
+/* Stack the hero and give its illustration/caption enough room on mobile. */
 @media (max-width: 767.98px) {
     .home-hero {
         grid-template-columns: 1fr;
@@ -278,7 +290,7 @@ body {
     }
 }
 
-/* Printshop directory */
+/* Printshop directory page: page width, heading, count, and shop cards. */
 .printshop-directory {
     max-width: 1100px;
     margin: 0 auto;
@@ -321,6 +333,7 @@ body {
     box-shadow: 0 0.75rem 1.75rem #18324b12;
 }
 
+/* Make the whole shop card an accessible button that opens its details modal. */
 .printshop-card-trigger {
     display: flex;
     width: 100%;
@@ -362,6 +375,7 @@ body {
     transform: translateX(3px);
 }
 
+/* Shop logo image, or the initial-letter placeholder when no logo exists. */
 .printshop-card-logo {
     display: block;
     width: 3.5rem;
@@ -400,6 +414,7 @@ body {
     color: var(--bright-coral);
 }
 
+/* Empty state shown when the database has no printshops to list. */
 .printshop-empty {
     margin-top: 1.5rem;
     padding: 2rem;
@@ -409,6 +424,7 @@ body {
     text-align: center;
 }
 
+/* Printshop details modal: logo, close button, sections, services, and contacts. */
 .printshop-modal-content {
     border: 1px solid #e3e8ef;
     border-radius: 1rem;
@@ -498,6 +514,7 @@ body {
     outline-offset: 2px;
 }
 
+/* Reflow the directory heading on narrow screens. */
 @media (max-width: 575.98px) {
     .printshop-heading {
         align-items: flex-start;

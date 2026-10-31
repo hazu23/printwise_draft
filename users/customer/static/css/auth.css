@@ -1,22 +1,186 @@
-body { background: var(--soft-gray); color: var(--ink-navy); }
-.auth-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 410px); gap: 60px; align-items: center; max-width: 920px; min-height: 570px; margin: 0 auto; padding: 35px 25px; }
-.auth-intro { max-width: 390px; }
-.auth-kicker { color: var(--print-blue); font-size: 10px; font-weight: 750; letter-spacing: 1.2px; }
-.auth-intro h1 { margin: 14px 0 12px; font-size: clamp(32px, 4vw, 46px); font-weight: 750; line-height: 1.12; letter-spacing: -1.5px; }
-.auth-intro > p { max-width: 350px; color: var(--slate); font-size: 15px; line-height: 1.7; }
-.auth-note { display: flex; align-items: center; gap: 9px; margin-top: 28px; color: #53677e; font-size: 12px; }
-.auth-note span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: #e7efff; color: var(--print-blue); font-weight: 800; }
-.auth-card { padding: 30px; border: 1px solid #e6ebf0; border-radius: 13px; background: #fff; box-shadow: 0 12px 35px #18324b0d; }
-.auth-card h2 { margin: 0 0 6px; font-size: 21px; font-weight: 720; letter-spacing: -.4px; }
-.auth-subtitle { margin: 0 0 22px; color: var(--slate); font-size: 11px; }
-.auth-form { display: grid; gap: 8px; }
-.auth-form label { margin-top: 5px; color: #40546a; font-size: 10px; font-weight: 650; }
-.auth-help { margin: -4px 0 3px; color: var(--slate); font-size: 10px; line-height: 1.5; }
-.auth-form input { width: 100%; height: 40px; padding: 0 11px; border: 1px solid #dfe6ed; border-radius: 6px; outline: none; color: var(--ink-navy); font-size: 12px; }
-.auth-form input:focus { border-color: var(--print-blue); box-shadow: 0 0 0 3px #356ae61c; }
-.auth-submit { display: flex; justify-content: space-between; align-items: center; height: 41px; margin-top: 10px; padding: 0 13px; border: 0; border-radius: 6px; background: var(--print-blue); color: white; font-size: 11px; font-weight: 700; }
-.auth-submit:hover { background: #2858c4; }
-.auth-submit span { font-size: 15px; }
-.auth-switch { margin: 18px 0 0; text-align: center; color: var(--slate); font-size: 10px; }
-.auth-switch a { color: var(--print-blue); font-weight: 700; text-decoration: none; }
-@media (max-width: 700px) { .auth-layout { grid-template-columns: 1fr; gap: 22px; min-height: auto; padding: 25px 8px; }.auth-intro h1 { max-width: 450px; font-size: 33px; }.auth-intro > p { margin-bottom: 10px; }.auth-note { margin-top: 15px; }.auth-card { padding: 23px; } }
+/* Shared page styling for the login and registration screens. */
+body {
+    background: var(--soft-gray);
+    color: var(--ink-navy);
+}
+
+/* Main two-column layout: introductory copy on the left, form on the right. */
+.auth-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 410px);
+    gap: 60px;
+    align-items: center;
+    max-width: 920px;
+    min-height: 570px;
+    margin: 0 auto;
+    padding: 35px 25px;
+}
+
+/* Introductory text and supporting note. */
+.auth-intro {
+    max-width: 390px;
+}
+
+.auth-kicker {
+    color: var(--print-blue);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 1.2px;
+}
+
+.auth-intro h1 {
+    margin: 14px 0 12px;
+    font-size: clamp(32px, 4vw, 46px);
+    font-weight: 750;
+    line-height: 1.12;
+    letter-spacing: -1.5px;
+}
+
+.auth-intro > p {
+    max-width: 350px;
+    color: var(--slate);
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.auth-note {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 28px;
+    color: #53677e;
+    font-size: 12px;
+}
+
+.auth-note span {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: #e7efff;
+    color: var(--print-blue);
+    font-weight: 800;
+}
+
+/* White container and heading for the authentication form. */
+.auth-card {
+    padding: 30px;
+    border: 1px solid #e6ebf0;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 12px 35px #18324b0d;
+}
+
+.auth-card h2 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    font-weight: 720;
+    letter-spacing: -.4px;
+}
+
+.auth-subtitle {
+    margin: 0 0 22px;
+    color: var(--slate);
+    font-size: 11px;
+}
+
+/* Form labels, inputs, validation hints, and submit button. */
+.auth-form {
+    display: grid;
+    gap: 8px;
+}
+
+.auth-form label {
+    margin-top: 5px;
+    color: #40546a;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.auth-help {
+    margin: -4px 0 3px;
+    color: var(--slate);
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.auth-form input {
+    width: 100%;
+    height: 40px;
+    padding: 0 11px;
+    border: 1px solid #dfe6ed;
+    border-radius: 6px;
+    outline: none;
+    color: var(--ink-navy);
+    font-size: 12px;
+}
+
+.auth-form input:focus {
+    border-color: var(--print-blue);
+    box-shadow: 0 0 0 3px #356ae61c;
+}
+
+.auth-submit {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 41px;
+    margin-top: 10px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--print-blue);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.auth-submit:hover {
+    background: #2858c4;
+}
+
+.auth-submit span {
+    font-size: 15px;
+}
+
+/* Link below the form for switching between login and registration. */
+.auth-switch {
+    margin: 18px 0 0;
+    text-align: center;
+    color: var(--slate);
+    font-size: 10px;
+}
+
+.auth-switch a {
+    color: var(--print-blue);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* Stack the intro and form on smaller screens. */
+@media (max-width: 700px) {
+    .auth-layout {
+        grid-template-columns: 1fr;
+        gap: 22px;
+        min-height: auto;
+        padding: 25px 8px;
+    }
+
+    .auth-intro h1 {
+        max-width: 450px;
+        font-size: 33px;
+    }
+
+    .auth-intro > p {
+        margin-bottom: 10px;
+    }
+
+    .auth-note {
+        margin-top: 15px;
+    }
+
+    .auth-card {
+        padding: 23px;
+    }
+}

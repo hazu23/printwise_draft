@@ -150,4 +150,3 @@ def check_email():
     email = payload.get('email', '') if isinstance(payload, dict) else ''
     valid = _is_valid_email(email)
     return jsonify({'valid': bool(valid)})
-

@@ -1,3 +1,4 @@
+// Get the registration form fields and their feedback areas from the page.
 const fullNameInput = document.getElementById("name");
 const registrationForm = fullNameInput?.form;
 const fullNameFeedback = document.getElementById("name-help");
@@ -9,6 +10,7 @@ const confirmPasswordInput = document.getElementById("confirm_password");
 const confirmPasswordFeedback = document.getElementById("confirm-password-help");
 
 function blockSpaces(input, feedback, message) {
+    // Reuse this helper for fields where whitespace is not allowed.
     function showSpaceMessage() {
         feedback.textContent = message;
         input.setAttribute("aria-invalid", "true");
@@ -48,6 +50,7 @@ function blockSpaces(input, feedback, message) {
     });
 }
 if (passwordInput && passwordFeedback) {
+    // Prevent spaces, then check password rules as the user types or leaves the field.
     blockSpaces(passwordInput, passwordFeedback, "Spaces aren't allowed in passwords.");
 
     function showPasswordError() {
@@ -74,13 +77,15 @@ if (passwordInput && passwordFeedback) {
 }
 
 if (confirmPasswordInput && confirmPasswordFeedback) {
+    // The server checks that the two passwords match; here we prevent spaces in confirmation too.
     blockSpaces(confirmPasswordInput, confirmPasswordFeedback, "Spaces aren't allowed in passwords.");
 }
 
 if (fullNameInput && registrationForm && fullNameFeedback) {
+    // These suffixes are allowed at the end of a full name and should not count as a last name.
     const nameSuffixes = ["sr.", "jr.", "ii", "iii", "iv", "v", "vi"];
 
-    // Unicode letter checks also allow accented letters in names.
+    // Check Unicode letters so accented characters from different languages are accepted.
     function containsOnlyLetters(text) {
         return /^\p{L}+$/u.test(text);
     }
@@ -90,6 +95,7 @@ if (fullNameInput && registrationForm && fullNameFeedback) {
     }
 
     function hasFirstAndLastName(value) {
+        // A complete name needs a first and last name; middle names and initials are optional.
         const parts = value.split(" ");
         const lastPart = parts[parts.length - 1].toLowerCase();
 
@@ -117,6 +123,7 @@ if (fullNameInput && registrationForm && fullNameFeedback) {
     }
 
     function cleanNameSpacing(trimEnd = false) {
+        // Remove leading spaces and repeated spaces, optionally trimming a trailing space too.
         const oldValue = fullNameInput.value;
         // Remember where the typing cursor is so it stays in the right place after cleanup.
         const cursorBeforeCleaning = fullNameInput.selectionStart;
@@ -139,6 +146,7 @@ if (fullNameInput && registrationForm && fullNameFeedback) {
     }
 
     function getNameError(value, checkCompleteName = false) {
+        // Return the first problem found, or an empty string if the name currently passes checks.
         if (value.length > 50) {
             return "A full name can't be longer than 50 characters.";
         }
@@ -198,6 +206,7 @@ if (fullNameInput && registrationForm && fullNameFeedback) {
     }
 
     function showNameError(checkCompleteName = false) {
+        // Put the name check result beside the input and expose its validity to assistive tools.
         const message = getNameError(fullNameInput.value, checkCompleteName);
         fullNameFeedback.textContent = message;
         fullNameInput.setAttribute("aria-invalid", message ? "true" : "false");
@@ -227,12 +236,14 @@ if (fullNameInput && registrationForm && fullNameFeedback) {
 }
 
 if (emailInput && emailFeedback) {
+    // Check basic email formatting locally, then ask Flask whether the domain is supported.
     blockSpaces(emailInput, emailFeedback, "Spaces aren't allowed in an email address.");
 
     let emailCheckTimer;
     let emailCheckNumber = 0;
 
     function showEmailError() {
+        // A counter and timer prevent unnecessary requests and stale replies from replacing newer ones.
         // Ignore earlier responses when the email changes during a check.
         emailCheckNumber += 1;
         const thisCheckNumber = emailCheckNumber;
@@ -258,6 +269,7 @@ if (emailInput && emailFeedback) {
 
         emailCheckTimer = setTimeout(async () => {
             try {
+                // Send the email to the Flask /check-email route as JSON.
                 const response = await fetch(emailInput.dataset.checkUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -275,6 +287,7 @@ if (emailInput && emailFeedback) {
                 emailFeedback.textContent = domainError;
                 emailInput.setAttribute("aria-invalid", domainError ? "true" : "false");
             } catch (error) {
+                // A network or server failure is shown without claiming the email itself is invalid.
                 if (thisCheckNumber === emailCheckNumber) {
                     emailFeedback.textContent = "The email domain couldn't be checked right now.";
                     emailInput.setAttribute("aria-invalid", "false");
