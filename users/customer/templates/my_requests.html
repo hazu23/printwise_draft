@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}My Requests | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('customer_bp.static', filename='css/my_requests.css') }}">{% endblock %}
+
+{% block content %}
+<section class="customer-requests" aria-labelledby="my-requests-heading">
+    {% set status_labels = {
+        'pending': 'Pending',
+        'accepted': 'Accepted',
+        'in_progress': 'In progress',
+        'ready': 'Ready for pickup',
+        'completed': 'Completed',
+        'declined': 'Declined'
+    } %}
+    <header class="customer-requests-heading">
+        <div>
+            <p class="requests-eyebrow">Your account</p>
+            <h1 id="my-requests-heading">My Requests</h1>
+            <p class="requests-intro">Keep track of your print requests and their latest status.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('customer_bp.printshops') }}">Browse printshops</a>
+    </header>
+
+    <nav class="request-summary" aria-label="Filter requests by status">
+        <a class="request-summary-card {% if selected_status == 'in_progress' %}is-selected{% endif %}"
+           href="{{ url_for('customer_bp.dashboard', status='in_progress') }}"
+           {% if selected_status == 'in_progress' %}aria-current="page"{% endif %}>
+            <span class="request-summary-number">{{ status_counts.in_progress }}</span>
+            <span>In progress</span>
+        </a>
+        <a class="request-summary-card {% if selected_status == 'ready' %}is-selected{% endif %}"
+           href="{{ url_for('customer_bp.dashboard', status='ready') }}"
+           {% if selected_status == 'ready' %}aria-current="page"{% endif %}>
+            <span class="request-summary-number">{{ status_counts.ready }}</span>
+            <span>Ready for pickup</span>
+        </a>
+        <a class="request-summary-card {% if selected_status == 'completed' %}is-selected{% endif %}"
+           href="{{ url_for('customer_bp.dashboard', status='completed') }}"
+           {% if selected_status == 'completed' %}aria-current="page"{% endif %}>
+            <span class="request-summary-number">{{ status_counts.completed }}</span>
+            <span>Completed</span>
+        </a>
+    </nav>
+
+    <div class="request-list-heading">
+        <h2>Recent requests</h2>
+        <div class="request-list-actions">
+            <a class="request-all-link {% if selected_status == 'all' %}is-active{% endif %}"
+               href="{{ url_for('customer_bp.dashboard') }}"
+               {% if selected_status == 'all' %}aria-current="page"{% endif %}>All requests</a>
+            <span class="text-secondary">{{ print_requests|length }} shown</span>
+        </div>
+    </div>
+
+    {% if print_requests %}
+        <div class="customer-request-list">
+            {% for print_request in print_requests %}
+                <article class="customer-request-card">
+                    <div class="request-card-main">
+                        <div class="request-card-copy">
+                            <p class="request-shop-name">{{ print_request.printshop.name }}</p>
+                            <h3>{{ print_request.service.name }}</h3>
+                            <p class="request-meta">
+                                Submitted {{ print_request.created_at.strftime('%b %d, %Y') }}
+                                <span aria-hidden="true">·</span>
+                                {{ print_request.file_paths|length }} file{{ 's' if print_request.file_paths|length != 1 else '' }}
+                                <span aria-hidden="true">·</span>
+                                Quantity: {{ print_request.quantity }}
+                            </p>
+                        </div>
+                        <span class="customer-request-status status-{{ print_request.status|replace('_', '-') }}">
+                            {{ status_labels.get(print_request.status, print_request.status|title) }}
+                        </span>
+                    </div>
+
+                    {% if print_request.selected_options %}
+                        <dl class="request-options">
+                            {% for option_name, option_value in print_request.selected_options.items() %}
+                                {% if option_value %}
+                                    <div>
+                                        <dt>{{ option_name|replace('_', ' ')|title }}</dt>
+                                        <dd>{{ option_value }}</dd>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </dl>
+                    {% endif %}
+
+                    <div class="request-card-footer">
+                        <span>Request #{{ print_request.id }}</span>
+                    </div>
+
+                    {% if request_files[print_request.id] %}
+                        <div class="request-uploaded-files">
+                            <h4>Uploaded files</h4>
+                            <ul>
+                                {% for file in request_files[print_request.id] %}
+                                    <li><a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% elif total_requests > 0 %}
+        <div class="requests-empty-state">
+            <h2>No matching requests</h2>
+            <p>You don't have any {{ status_labels.get(selected_status, 'matching')|lower }} requests right now.</p>
+            <a class="btn btn-outline-secondary" href="{{ url_for('customer_bp.dashboard') }}">Show all requests</a>
+        </div>
+    {% else %}
+        <div class="requests-empty-state">
+            <h2>No requests yet</h2>
+            <p>Your print requests will appear here after you send one to a printshop.</p>
+            <a class="btn btn-primary" href="{{ url_for('customer_bp.printshops') }}">Find a printshop</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

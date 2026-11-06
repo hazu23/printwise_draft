@@ -21,6 +21,7 @@
         {% endfor %}
     </dl>
 
-    <a class="btn btn-primary" href="{{ url_for('customer_bp.printshops') }}">Back to printshops</a>
+    <a class="btn btn-primary" href="{{ url_for('customer_bp.dashboard') }}">View my requests</a>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('customer_bp.printshops') }}">Back to printshops</a>
 </section>
 {% endblock %}

@@ -1,11 +1,8 @@
 import re # re is used to check the shape of an email address.
-
-# Flask tools for routes, requests, pages, messages, JSON, redirects, and sessions.
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
-# Werkzeug hashes passwords for storage and checks a password at login.
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from users import db # db is how we talk to the MySQL database.
+from users import db # db is how we talk to the mysql database.
 from users.models import Account, Customer # These are the tables we use here.
 
 # A Blueprint groups related routes. Its name is used in url_for, like auth.login.
@@ -67,11 +64,11 @@ def login():
     if 'user_id' in session:
         role = session.get('user_role')
         if role == 'customer':
-            return redirect(url_for('customer_bp.printshops'))
+            return redirect(url_for('customer_bp.dashboard'))
         if role == 'staff':
             return redirect(url_for('staff_bp.index'))
         if role == 'admin':
-            return redirect(url_for('admin_bp.index'))
+            return redirect(url_for('shop_requests.inbox'))
         return redirect(url_for('customer_bp.index'))
 
     # GET shows the form. POST means the form was submitted.
@@ -92,7 +89,9 @@ def login():
             session['user_role'] = account.role
             flash('Welcome back!', 'success')
             if account.role == 'customer':
-                return redirect(url_for('customer_bp.printshops'))
+                return redirect(url_for('customer_bp.dashboard'))
+            if account.role == 'admin':
+                return redirect(url_for('shop_requests.inbox'))
             return redirect(url_for('customer_bp.index'))
     return render_template('auth/login.html')
 

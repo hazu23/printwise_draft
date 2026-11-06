@@ -1,12 +1,12 @@
 from . import db
 
-# Each class below describes a MySQL table. SQLAlchemy maps the class and its
-# attributes to the table and columns so the rest of the app can use Python.
+# every class below describes a table. SQLAlchemy maps the class and its
+# attributes to the table and columns so the rest of the app can use python.
 class Account(db.Model):
     __tablename__ = "accounts"
 
-    # Account identity and sign-in details. The password is stored as a hash,
-    # not as the original password. Email must be unique for each account.
+    # Account identity and sign-in details. The password is stored as a hash.
+    # Email must be unique for each account.
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)

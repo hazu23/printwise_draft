@@ -16,6 +16,11 @@ body {
     padding: 35px 25px;
 }
 
+/* Give the login form a little more room without enlarging registration. */
+.login-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(350px, 430px);
+}
+
 /* Introductory text and supporting note. */
 .auth-intro {
     max-width: 390px;
@@ -72,6 +77,10 @@ body {
     box-shadow: 0 12px 35px #18324b0d;
 }
 
+.login-layout .auth-card {
+    padding: 33px;
+}
+
 .auth-card h2 {
     margin: 0 0 6px;
     font-size: 21px;
@@ -116,6 +125,10 @@ body {
     font-size: 12px;
 }
 
+.login-layout .auth-form input {
+    height: 43px;
+}
+
 .auth-form input:focus {
     border-color: var(--print-blue);
     box-shadow: 0 0 0 3px #356ae61c;
@@ -134,6 +147,10 @@ body {
     color: white;
     font-size: 11px;
     font-weight: 700;
+}
+
+.login-layout .auth-submit {
+    height: 44px;
 }
 
 .auth-submit:hover {
@@ -182,5 +199,13 @@ body {
 
     .auth-card {
         padding: 23px;
+    }
+
+    .login-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .login-layout .auth-card {
+        padding: 26px;
     }
 }

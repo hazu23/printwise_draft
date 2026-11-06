@@ -34,12 +34,16 @@ def create_app():
     # Import the route groups after the app and models are ready.
     from users.auth import auth
     from users.customer.customer import customer_bp
+    from users.customer.print_requests import request_bp
+    from users.staff.requests import shop_requests_bp
     from users.staff.staff import staff_bp
     from users.admin.admin import admin_bp
 
     # Register each blueprint so its routes become available in the app.
     app.register_blueprint(auth)
     app.register_blueprint(customer_bp)
+    app.register_blueprint(request_bp)
+    app.register_blueprint(shop_requests_bp)
     app.register_blueprint(staff_bp)
     app.register_blueprint(admin_bp)
 

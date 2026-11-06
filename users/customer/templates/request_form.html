@@ -36,7 +36,8 @@
         <div class="request-form-field">
             <label for="request-files">Upload files</label>
             <input id="request-files" name="print_files" class="form-control" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple required>
-            <small class="request-field-help">Choose a file to print. Accepted: PDF, DOC, DOCX, JPG, or PNG.</small>
+            <small class="request-field-help">Select files to print. You can add more, preview them, or remove them before sending. Accepted: PDF, DOC, DOCX, JPG, or PNG.</small>
+            <div id="request-file-list" class="request-file-list" aria-live="polite"></div>
         </div>
 
         <div class="request-form-field">

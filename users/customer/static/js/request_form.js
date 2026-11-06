@@ -14,6 +14,104 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keep a combined list so each file-picker selection adds to the previous ones.
     if (filesInput) {
         let accumulatedFiles = Array.from(filesInput.files);
+        const fileList = document.getElementById('request-file-list');
+        let previewUrls = [];
+
+        function updateFileInput() {
+            const combinedFiles = new DataTransfer();
+            accumulatedFiles.forEach((file) => combinedFiles.items.add(file));
+            filesInput.files = combinedFiles.files;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) {
+                return `${bytes} B`;
+            }
+            if (bytes < 1024 * 1024) {
+                return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+            }
+            return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        function renderFileList() {
+            if (!fileList) return;
+
+            previewUrls.forEach((url) => URL.revokeObjectURL(url));
+            previewUrls = [];
+            fileList.replaceChildren();
+
+            if (accumulatedFiles.length === 0) {
+                fileList.textContent = 'No files selected yet.';
+                fileList.classList.add('is-empty');
+                return;
+            }
+
+            fileList.classList.remove('is-empty');
+            const heading = document.createElement('p');
+            heading.className = 'request-file-list-heading';
+            heading.textContent = `${accumulatedFiles.length} file${accumulatedFiles.length === 1 ? '' : 's'} selected`;
+            fileList.append(heading);
+
+            const list = document.createElement('ul');
+            list.className = 'request-file-items';
+
+            accumulatedFiles.forEach((file, index) => {
+                const item = document.createElement('li');
+                item.className = 'request-file-item';
+
+                const details = document.createElement('div');
+                details.className = 'request-file-details';
+
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'request-file-info';
+
+                const name = document.createElement('span');
+                name.className = 'request-file-name';
+                name.textContent = file.name;
+
+                const size = document.createElement('span');
+                size.className = 'request-file-size';
+                size.textContent = formatFileSize(file.size);
+                fileInfo.append(name, size);
+
+                const previewUrl = URL.createObjectURL(file);
+                previewUrls.push(previewUrl);
+
+                const viewLink = document.createElement('a');
+                viewLink.className = 'request-file-view';
+                viewLink.href = previewUrl;
+                viewLink.target = '_blank';
+                viewLink.rel = 'noopener';
+                viewLink.textContent = 'View';
+                viewLink.setAttribute('aria-label', `View ${file.name} in a new tab`);
+
+                const removeButton = document.createElement('button');
+                removeButton.className = 'request-file-remove';
+                removeButton.type = 'button';
+                removeButton.textContent = 'Remove';
+                removeButton.setAttribute('aria-label', `Remove ${file.name}`);
+                removeButton.addEventListener('click', () => {
+                    accumulatedFiles = accumulatedFiles.filter((selectedFile, fileIndex) => fileIndex !== index);
+                    updateFileInput();
+                    renderFileList();
+                });
+
+                details.append(fileInfo, viewLink, removeButton);
+
+                if (file.type.startsWith('image/')) {
+                    const imagePreview = document.createElement('img');
+                    imagePreview.className = 'request-file-preview';
+                    imagePreview.src = previewUrl;
+                    imagePreview.alt = `Preview of ${file.name}`;
+                    item.append(imagePreview);
+                }
+
+                item.append(details);
+                list.append(item);
+            });
+
+            fileList.append(list);
+        }
 
         filesInput.addEventListener('change', () => {
             const knownFiles = new Set(
@@ -28,10 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            const combinedFiles = new DataTransfer();
-            accumulatedFiles.forEach((file) => combinedFiles.items.add(file));
-            filesInput.files = combinedFiles.files;
+            updateFileInput();
+            renderFileList();
         });
+
+        renderFileList();
     }
 
     // These JSON objects come from the printshop's service records.

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Print Requests | PrintWise{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('staff_bp.static', filename='css/request_inbox.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="request-inbox-page" aria-labelledby="request-inbox-heading">
+    <header class="request-inbox-heading">
+        <div>
+            <p class="home-label">{{ page_shop_name }}</p>
+            <h1 id="request-inbox-heading">Print requests</h1>
+            <p class="text-secondary mb-0">Review customer requests, open their files, and update request status.</p>
+        </div>
+    </header>
+
+    {% if not has_shop %}
+        <div class="request-inbox-empty" role="status">
+            <h2>No printshop is linked to this account</h2>
+            <p>Ask the PrintWise administrator to connect your account to a printshop.</p>
+        </div>
+    {% else %}
+        <section class="request-inbox-panel" aria-labelledby="request-list-heading">
+            <div class="request-inbox-panel-heading">
+                <h2 id="request-list-heading">Request inbox</h2>
+                <span class="text-secondary">{{ request_details|length }} request{{ 's' if request_details|length != 1 else '' }}</span>
+            </div>
+
+            <div class="request-inbox-filters" role="group" aria-label="Filter requests by status">
+                <button class="request-filter is-active" type="button" data-request-filter="all" aria-pressed="true">All <span>{{ status_counts.all }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="pending" aria-pressed="false">Pending <span>{{ status_counts.pending }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="accepted" aria-pressed="false">Accepted <span>{{ status_counts.accepted }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="in_progress" aria-pressed="false">In progress <span>{{ status_counts.in_progress }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="ready" aria-pressed="false">Ready <span>{{ status_counts.ready }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="completed" aria-pressed="false">Completed <span>{{ status_counts.completed }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="declined" aria-pressed="false">Declined <span>{{ status_counts.declined }}</span></button>
+            </div>
+
+            <div class="request-inbox-column-labels" aria-hidden="true">
+                <span>Customer and request</span><span>Submitted</span><span>Status</span><span>Files</span>
+            </div>
+
+            <div id="request-inbox-list" class="request-inbox-list">
+                {% for item in request_details %}
+                    <button class="request-inbox-row" type="button"
+                            data-request-id="{{ item.id }}"
+                            data-request-status="{{ item.status }}"
+                            data-status-url="{{ url_for('shop_requests.update_status', request_id=item.id) }}"
+                            data-bs-toggle="modal" data-bs-target="#request-details-modal"
+                            aria-label="Open request {{ item.id }} from {{ item.customer_name }}">
+                        <span class="request-row-customer">
+                            <span class="request-row-avatar" aria-hidden="true">{{ item.customer_name[:1]|upper }}</span>
+                            <span class="request-row-copy">
+                                <strong>{{ item.customer_name }}</strong>
+                                <span>{{ item.service }} · {{ item.quantity }} {{ item.quantity_unit }}</span>
+                                {% if shops|length > 1 %}<small>{{ item.shop }}</small>{% endif %}
+                            </span>
+                        </span>
+                        <span class="request-row-date">{{ item.submitted }}</span>
+                        <span class="request-status-badge status-{{ item.status }}">{{ item.status_label }}</span>
+                        <span class="request-row-files">{{ item.files|length }} file{{ 's' if item.files|length != 1 else '' }}</span>
+                    </button>
+                {% else %}
+                    <div class="request-inbox-empty">
+                        <h2>No print requests yet</h2>
+                        <p>New customer requests for {{ page_shop_name }} will appear here.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</section>
+
+<div class="modal fade" id="request-details-modal" tabindex="-1" aria-labelledby="request-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content request-details-modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title fs-5" id="request-modal-title">Request details</h2>
+                    <span id="request-modal-id" class="request-modal-id"></span>
+                </div>
+                <span id="request-modal-status" class="request-status-badge"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="request-modal-body">
+                <section class="request-modal-section" aria-labelledby="request-modal-customer-heading">
+                    <h3 id="request-modal-customer-heading">Customer</h3>
+                    <p id="request-modal-customer-name" class="request-modal-strong"></p>
+                    <a id="request-modal-customer-email" class="request-modal-link"></a>
+                </section>
+
+                <section class="request-modal-section" aria-labelledby="request-modal-print-heading">
+                    <h3 id="request-modal-print-heading">Print details</h3>
+                    <dl id="request-modal-options" class="request-modal-options"></dl>
+                </section>
+
+                <section id="request-modal-notes-section" class="request-modal-section" aria-labelledby="request-modal-notes-heading">
+                    <h3 id="request-modal-notes-heading">Customer instructions</h3>
+                    <p id="request-modal-notes" class="request-modal-notes"></p>
+                </section>
+
+                <section class="request-modal-section" aria-labelledby="request-modal-files-heading">
+                    <h3 id="request-modal-files-heading">Uploaded files</h3>
+                    <div id="request-modal-files" class="request-modal-files"></div>
+                </section>
+            </div>
+            <div class="modal-footer request-modal-footer">
+                <form id="request-status-form" method="post" action="" class="request-status-form">
+                    <label for="request-status-select">Update status</label>
+                    <select id="request-status-select" name="status" class="form-select">
+                        <option value="pending">Pending</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="in_progress">In progress</option>
+                        <option value="ready">Ready</option>
+                        <option value="completed">Completed</option>
+                        <option value="declined">Declined</option>
+                    </select>
+                    <button class="btn btn-primary" type="submit">Save status</button>
+                </form>
+                <div id="request-decision-actions" class="request-decision-actions">
+                    <button id="request-accept-button" class="btn btn-primary" type="button">Accept request</button>
+                    <button id="request-decline-button" class="btn btn-outline-secondary" type="button">Decline</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script id="request-inbox-data" type="application/json">{{ request_details|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('staff_bp.static', filename='js/request_inbox.js') }}"></script>
+{% endblock %}
