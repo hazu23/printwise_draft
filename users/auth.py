@@ -50,8 +50,9 @@ def _registration_error(name, email, password, confirmation):
         return 'Your password must include at least one letter.'
     if not any(character.isdigit() for character in password):
         return 'Your password must include at least one number.'
-    if not any(not character.isalnum() for character in password):
-        return 'Your password must include at least one special character.'
+    # uncomment if i want to add a special character rule
+    # if not any(not character.isalnum() for character in password):
+    #     return 'Your password must include at least one special character.'
     if password != confirmation:
         return 'The passwords do not match.'
     return None  # None means every check passed.

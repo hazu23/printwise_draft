@@ -1,7 +1,6 @@
 from . import db
 
-# every class below describes a table. SQLAlchemy maps the class and its
-# attributes to the table and columns so the rest of the app can use python.
+# main table.
 class Account(db.Model):
     __tablename__ = "accounts"
 
@@ -13,8 +12,8 @@ class Account(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # customer, staff, or admin
 
-    # Connect this account to its role-specific record. uselist=False means
-    # each account has at most one matching customer, staff, or admin record.
+    # lets me jump from an account to its extra info. 
+    # uselist=False means you get one item, not a list.
     customer = db.relationship("Customer", back_populates="account", uselist=False)
     staff = db.relationship("Staff", back_populates="account", uselist=False)
     admin = db.relationship("Admin", back_populates="account", uselist=False)
@@ -27,12 +26,11 @@ class Customer(db.Model):
         db.Integer, db.ForeignKey("accounts.id"), primary_key=True
     )
 
-    # Let Python code move from a customer record to its Account object.
+    # gives the whole account row, so you dont have to look it up yourself.
     account = db.relationship("Account", back_populates="customer")
 
 
 class Admin(db.Model):
-    # Store admin-specific information separately while reusing the account ID.
     __tablename__ = "admin"
 
     account_id = db.Column(
@@ -45,11 +43,8 @@ class Admin(db.Model):
 
 
 class PrintShop(db.Model):
-    # Each row represents one printshop shown in the customer directory.
     __tablename__ = "printshops"
 
-    # Basic public shop details. Optional fields can be empty until the shop
-    # provides them, name and location are required.
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -60,13 +55,10 @@ class PrintShop(db.Model):
     website = db.Column(db.String(255), nullable=True)
     business_hours = db.Column(db.String(255), nullable=True)
 
-    # Optional link to the admin account that owns/manages this shop.
     admin_account_id = db.Column(
         db.Integer, db.ForeignKey("admin.account_id"), nullable=True
     )
 
-    # These relationships let Python code get the shop's admin, staff, and
-    # service/product rows without writing a join query by hand.
     admin = db.relationship("Admin", back_populates="printshops")
     staff_members = db.relationship("Staff", back_populates="printshop")
     offerings = db.relationship("PrintShopServices", back_populates="printshop")
@@ -75,30 +67,20 @@ class PrintShop(db.Model):
 class PrintShopServices(db.Model):
     __tablename__ = "printshops_services"
 
-    # Link each offering to the printshop that provides it. The name is
-    # required; description and customer choices are optional.
     id = db.Column(db.Integer, primary_key=True)
     printshop_id = db.Column(
         db.Integer, db.ForeignKey("printshops.id"), nullable=False
     )
     name = db.Column(db.String(120), nullable=False)
-    # Separate work customers request ("service") from items they can order
-    # ("product").
     category = db.Column(db.String(20), nullable=False, default="service")
     description = db.Column(db.Text, nullable=True)
-    # Optional JSON data for choices such as paper size, color, quantity, or
-    # finish. This can vary between offerings.
     options = db.Column(db.JSON, nullable=True)
-    # Inactive rows stay in the database but should not be shown to customers.
     is_active = db.Column(db.Boolean, nullable=False, default=True)
 
-    # Link back to the printshop that owns this offering.
     printshop = db.relationship("PrintShop", back_populates="offerings")
 
 
 class PrintRequest(db.Model):
-    """A customer's request for one service from one printshop."""
-
     __tablename__ = "print_requests"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -134,6 +116,5 @@ class Staff(db.Model):
         db.Integer, db.ForeignKey("printshops.id"), nullable=False
     )
 
-    # Allow app code to access the staff member's account and assigned shop.
     account = db.relationship("Account", back_populates="staff")
     printshop = db.relationship("PrintShop", back_populates="staff_members")

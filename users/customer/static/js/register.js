@@ -63,8 +63,9 @@ if (passwordInput && passwordFeedback) {
             message = "Add at least one letter.";
         } else if (password && !/[0-9]/u.test(password)) {
             message = "Add at least one number.";
-        } else if (password && !/[^\p{L}\p{N}\s]/u.test(password)) {
-            message = "Add at least one special character, such as ! or #.";
+        // uncomment if i want to add a special character rule
+        // } else if (password && !/[^\p{L}\p{N}\s]/u.test(password)) {
+        //     message = "Add at least one special character, such as ! or #.";
         }
 
         passwordFeedback.textContent = message;
@@ -283,7 +284,7 @@ if (emailInput && emailFeedback) {
 
                 const domainError = result.valid
                     ? ""
-                    : "This email address is not valid. Check the spelling.";
+                    : "This email address is not valid. Please check the spelling.";
                 emailFeedback.textContent = domainError;
                 emailInput.setAttribute("aria-invalid", domainError ? "true" : "false");
             } catch (error) {
