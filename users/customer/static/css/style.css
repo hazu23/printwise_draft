@@ -272,6 +272,13 @@ body {
     background: #eef3ff;
 }
 
+.home-art-image {
+    max-width: 70%;
+    max-height: 13rem;
+    object-fit: contain;
+    margin-top: -2rem;
+}
+
 .home-art-circle {
     position: absolute;
     width: 15rem;
@@ -354,7 +361,7 @@ body {
     left: 1rem;
     z-index: 3;
     color: var(--ink-navy);
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     font-weight: 600;
     text-align: center;
 }

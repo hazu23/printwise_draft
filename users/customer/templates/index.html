@@ -14,14 +14,8 @@
         </div>
     </div>
 
-    <div class="home-art" aria-label="A simple illustration of a printer and printed page" role="img">
-        <div class="home-art-circle"></div>
-        <div class="home-paper"><span></span><span></span><span></span></div>
-        <div class="home-printer">
-            <div class="home-printer-top"></div>
-            <div class="home-printer-light"></div>
-            <div class="home-printer-slot"></div>
-        </div>
+    <div class="home-art">
+        <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo.png') }}" alt="A printer and printed page" class="home-art-image">
         <p class="home-art-caption">Your request, ready to print.</p>
     </div>
 </section>
