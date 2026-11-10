@@ -1,0 +1,93 @@
+/* landing.css: styles for the home page (index.html).
+   The colors come from the variables in style.css, like var(--print-blue). */
+
+/* Small blue text that sits above headings */
+.lp-label {
+    margin: 0 0 0.75rem;
+    color: var(--print-blue);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.lp-label-light { color: #a9c1ff; }
+
+/* ---------- HERO ---------- */
+.lp-hero {
+    display: flex;
+    flex-wrap: wrap;          /* the two sides stack on small screens */
+    align-items: center;
+    gap: 3rem;
+    padding: clamp(2rem, 5vw, 4.5rem);
+    border-radius: 1.5rem;
+    background: #eef3ff;
+}
+
+.lp-hero-text { flex: 1 1 22rem; } /* grow, shrink, and start at 22rem wide */
+
+.lp-hero-text h1 {
+    margin: 0;
+    max-width: 36rem;
+    font-size: clamp(2.3rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+}
+
+.lp-hero-text h1 span { color: var(--print-blue); }
+
+.lp-lead {
+    max-width: 30rem;
+    margin: 1.25rem 0 0;
+    color: #3b4d63;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.lp-buttons { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+.lp-note { margin: 1.25rem 0 0; color: #556274; font-size: 0.9rem; }
+
+/* ---------- Sample request card ---------- */
+.lp-hero-visual {
+    display: flex;
+    flex: 1 1 22rem;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 28rem;
+    padding: 1.75rem;
+    border-radius: 1.5rem;
+    background: #dce7ff;
+}
+
+.lp-request-card { padding: 1.25rem; border-radius: 1rem; background: white; box-shadow: 0 0.75rem 1.75rem #18324b1a; }
+.lp-request-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.lp-request-file { margin: 0; font-weight: 700; }
+.lp-request-shop { margin: 0.2rem 0 0; color: #556274; font-size: 0.85rem; }
+.lp-request-specs { margin: 0.9rem 0 0; color: #3b4d63; font-size: 0.9rem; }
+.lp-pill { padding: 0.3rem 0.75rem; border-radius: 2rem; background: #e7efff; color: #1f4fbf; font-size: 0.8rem; font-weight: 600; }
+
+/* The three status steps with a circle before each one */
+.lp-status-list { margin: 1.1rem 0 0; padding: 0; list-style: none; }
+.lp-status-list li { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.7rem; color: #556274; font-size: 0.9rem; }
+.lp-status-list li::before { content: ""; width: 1.3rem; height: 1.3rem; box-sizing: border-box; border: 2px solid #cbd5df; border-radius: 50%; background: white; }
+.lp-status-list .lp-done { color: var(--ink-navy); }
+.lp-status-list .lp-done::before { border-color: #2a9d6f; background: #2a9d6f; }
+.lp-status-list .lp-current { color: var(--ink-navy); font-weight: 700; }
+.lp-status-list .lp-current::before { border: 0.4rem solid var(--print-blue); }
+
+.lp-pickup-card { display: flex; align-items: center; gap: 0.75rem; margin-left: 2.5rem; padding: 0.85rem 1.1rem; border-radius: 0.9rem; background: white; font-size: 0.9rem; font-weight: 600; box-shadow: 0 0.5rem 1.25rem #18324b14; }
+.lp-dot { width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--bright-coral); }
+
+/* ---------- Sections and cards ---------- */
+.lp-section { padding: 4.5rem 0 0; }
+.lp-heading { max-width: 34rem; margin: 0; font-size: clamp(1.8rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+.lp-card { height: 100%; padding: 1.5rem; border: 1px solid #e3e8ef; border-radius: 1rem; background: #f8fafc; }
+.lp-card-white { background: white; }
+.lp-number { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; margin-bottom: 1rem; border-radius: 0.75rem; background: #eaf0ff; color: #1f4fbf; font-weight: 700; }
+
+/* ---------- Dark band for printshops ---------- */
+.lp-band { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2rem; margin-top: 4.5rem; padding: clamp(2rem, 5vw, 3rem); border-radius: 1.5rem; background: var(--ink-navy); color: white; }
+.lp-band-text { flex: 1 1 22rem; }
+.lp-band h2 { max-width: 34rem; margin: 0; font-size: clamp(1.6rem, 3.5vw, 2.1rem); font-weight: 800; letter-spacing: -0.03em; }
+.lp-band p { max-width: 32rem; margin: 1rem 0 0; color: #d3deef; }
+.lp-band .lp-label { margin-bottom: 0.75rem; }
