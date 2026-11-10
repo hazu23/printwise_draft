@@ -10,49 +10,34 @@
     {% block stylesheets %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    <nav class="navbar navbar-expand-lg bg-white border-bottom">
-        <div class="container printwise-nav-container">
+    <nav class="navbar navbar-expand-lg pw-navbar sticky-top" data-bs-theme="dark">
+        <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ url_for('customer_bp.index') }}">
-                <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo.png') }}" alt="PrintWise logo" height="30">PrintWise</a>
-            {% if session.get('user_id') %}
-                <div class="printshops-nav-slot">
-                    {% if session.get('user_role') == 'customer' %}
-                        <a class="nav-link printshops-nav-link {% if request.endpoint == 'customer_bp.dashboard' %}active{% endif %}"
-                           href="{{ url_for('customer_bp.dashboard') }}"
-                           {% if request.endpoint == 'customer_bp.dashboard' %}aria-current="page"{% endif %}>
-                            My Requests
-                        </a>
-                    {% endif %}
-                    <a class="nav-link printshops-nav-link {% if request.endpoint == 'customer_bp.printshops' %}active{% endif %}"
-                       href="{{ url_for('customer_bp.printshops') }}"
-                       {% if request.endpoint == 'customer_bp.printshops' %}aria-current="page"{% endif %}>
-                        Printshops
-                    </a>
-                    {% if session.get('user_role') in ('staff', 'admin') %}
-                        <a class="nav-link printshops-nav-link {% if request.blueprint == 'shop_requests' %}active{% endif %}"
-                           href="{{ url_for('shop_requests.inbox') }}"
-                           {% if request.blueprint == 'shop_requests' %}aria-current="page"{% endif %}>
-                            Requests
-                        </a>
+                <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo(3).png') }}" alt="PrintWise logo" height="30">PrintWise</a>
+
+            <!-- This button shows the menu on small screens -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav mx-lg-auto gap-lg-3">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('customer_bp.index') }}#getting-started">How it works</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('customer_bp.index') }}#why-printwise">Why PrintWise</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('customer_bp.index') }}#for-printshops">For printshops</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-3">
+                    {% if session.get('user_id') %}
+                        <span class="small pw-greeting">Hi, {{ session.get('user_name') }}</span>
+                        <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+                            <button class="btn btn-outline-light btn-sm" type="submit">Log out</button>
+                        </form>
+                    {% else %}
+                        <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.login') }}">Log in</a>
+                        <a class="btn btn-light btn-sm" href="{{ url_for('auth.register') }}">Create account</a>
                     {% endif %}
                 </div>
-            {% endif %}
-            <div class="ms-auto d-flex align-items-center gap-3 printwise-nav-actions">
-                {% if session.get('user_id') %}
-                    <div class="printwise-profile">
-                        <span class="printwise-profile-avatar" aria-hidden="true">{{ (session.get('user_name') or 'User')[:1]|upper }}</span>
-                        <span class="printwise-profile-copy">
-                            <span class="printwise-profile-name">{{ session.get('user_name') }}</span>
-                            <span class="printwise-profile-role">{% if session.get('user_role') == 'admin' %}Admin{% elif session.get('user_role') == 'staff' %}Staff{% else %}Customer{% endif %}</span>
-                        </span>
-                    </div>
-                    <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
-                        <button class="btn btn-outline-secondary btn-sm" type="submit">Log out</button>
-                    </form>
-                {% else %}
-                    <a class="small text-decoration-none" href="{{ url_for('auth.login') }}">Log in</a>
-                    <a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">Create account</a>
-                {% endif %}
             </div>
         </div>
     </nav>
@@ -64,6 +49,13 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+    <footer class="pw-footer">
+        <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span class="d-flex align-items-center gap-2 fw-bold pw-footer-brand">
+                <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo(3).png') }}" alt="PrintWise logo" class="pw-footer-logo">PrintWise</span>
+            <span class="small text-secondary">A printing business management system.</span>
+        </div>
+    </footer>
     {% block scripts %}{% endblock %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>

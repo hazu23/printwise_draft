@@ -91,3 +91,10 @@
 .lp-band h2 { max-width: 34rem; margin: 0; font-size: clamp(1.6rem, 3.5vw, 2.1rem); font-weight: 800; letter-spacing: -0.03em; }
 .lp-band p { max-width: 32rem; margin: 1rem 0 0; color: #d3deef; }
 .lp-band .lp-label { margin-bottom: 0.75rem; }
+
+/* "See how it works" gets the same hover color as the navbar's "Create account" button */
+.lp-buttons .btn-outline-secondary {
+    --bs-btn-hover-bg: #d3d4d5;
+    --bs-btn-hover-border-color: #c6c7c8;
+    --bs-btn-hover-color: var(--print-blue);
+}
