@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PrintWise{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('customer_bp.static', filename='images/printwise_logo_round.png') }}">
     <link rel="icon" type="image/png" href="{{ url_for('customer_bp.static', filename='images/printwise_logo(1).png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('customer_bp.static', filename='css/style.css') }}">
@@ -12,8 +13,7 @@
 <body class="{% block body_class %}{% endblock %}">
     <nav class="navbar navbar-expand-lg pw-navbar sticky-top" data-bs-theme="dark">
         <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ url_for('customer_bp.index') }}">
-                <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo(3).png') }}" alt="PrintWise logo" height="30">PrintWise</a>
+<img src="{{ url_for('customer_bp.static', filename='images/printwise_logo_round.png') }}" alt="PrintWise logo" class="pw-footer-logo">
 
             <!-- This button shows the menu on small screens -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@
     <footer class="pw-footer">
         <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="d-flex align-items-center gap-2 fw-bold pw-footer-brand">
-                <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo(3).png') }}" alt="PrintWise logo" class="pw-footer-logo">PrintWise</span>
+                <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo_main.png') }}" alt="PrintWise" class="auth-logo">
             <span class="small text-secondary">A printing business management system.</span>
         </div>
     </footer>

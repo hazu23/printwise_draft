@@ -972,3 +972,12 @@ html {
     border-radius: 50%;     /* 50% makes the image a circle */
     object-fit: cover;      /* fills the circle without stretching the image */
 }
+
+/* Round logo in the navbar, with a white ring so it stands out on the blue bar */
+.pw-nav-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px white;
+}
+
