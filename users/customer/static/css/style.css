@@ -924,20 +924,21 @@ body.landing-page {
     }
 }
 
-/* Navbar in PrintWise's blue */
+/* ===== PrintWise navbar (blue bar), nav buttons, profile, and footer ===== */
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;   /* keeps section titles from hiding under the fixed bar */
 }
 
+/* Navbar in PrintWise's blue */
 .pw-navbar {
     background: var(--print-blue);
+    border-bottom: 0;
 }
 
 .pw-navbar .navbar-brand,
 .pw-navbar .navbar-brand:hover,
-.pw-navbar .nav-link,
-.pw-navbar .pw-greeting {
+.pw-navbar .nav-link {
     color: white;
 }
 
@@ -946,6 +947,12 @@ html {
     text-decoration: underline;
 }
 
+.pw-nav-logo {
+    height: 34px;
+    width: auto;
+}
+
+/* Log in / Create account / Log out buttons */
 .pw-navbar .btn-outline-light:hover {
     color: var(--print-blue);
 }
@@ -955,7 +962,77 @@ html {
     font-weight: 600;
 }
 
-/* Footer */
+/* Printshops / Requests / My Requests: button-style links on the blue bar */
+.pw-navbar .printshops-nav-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pw-navbar .printshops-nav-slot a.printshops-nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.75) !important;
+    border-radius: 0.5rem;
+    background: transparent !important;
+    color: white !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Hover and the page you are on: white button with blue text */
+.pw-navbar .printshops-nav-slot a.printshops-nav-link:hover,
+.pw-navbar .printshops-nav-slot a.printshops-nav-link.active {
+    background: white !important;
+    border-color: white !important;
+    color: var(--print-blue) !important;
+}
+
+/* Profile: round letter avatar with the name and role next to it */
+.pw-navbar .printwise-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.pw-navbar .printwise-profile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 50%;
+    background: white !important;
+    color: var(--print-blue) !important;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.pw-navbar .printwise-profile-copy {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.pw-navbar .printwise-profile-name {
+    color: white !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.pw-navbar .printwise-profile-role {
+    color: #dce7ff !important;
+    font-size: 0.75rem;
+}
+
+/* Footer in navy */
 .pw-footer {
     margin-top: 2rem;
     padding: 1.75rem 0;
@@ -975,9 +1052,4 @@ html {
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
-}
-
-.pw-nav-logo {
-    height: 34px;
-    width: auto;
 }
