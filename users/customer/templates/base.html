@@ -25,11 +25,13 @@
                             My Requests
                         </a>
                     {% endif %}
+                    {% if session.get('user_role') == 'customer' %}
                     <a class="nav-link printshops-nav-link {% if request.endpoint == 'customer_bp.printshops' %}active{% endif %}"
                        href="{{ url_for('customer_bp.printshops') }}"
                        {% if request.endpoint == 'customer_bp.printshops' %}aria-current="page"{% endif %}>
                         Printshops
                     </a>
+                    {% endif %}
                     {% if session.get('user_role') in ('staff', 'admin') %}
                         <a class="nav-link printshops-nav-link {% if request.blueprint == 'shop_requests' %}active{% endif %}"
                            href="{{ url_for('shop_requests.inbox') }}"

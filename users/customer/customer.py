@@ -1,6 +1,6 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-from users.models import PrintRequest, PrintShop
+from users.models import Account, PrintRequest, PrintShop
 
 
 customer_bp = Blueprint(
@@ -23,6 +23,10 @@ def printshops():
     if 'user_id' not in session:
         flash('Please log in to browse printshops.', 'error')
         return redirect(url_for('auth.login'))
+        # Staff and admins work with requests, so send them to their own home page.
+    if session.get('user_role') in ('staff', 'admin'):
+        shop_worker = Account.query.get(session['user_id'])
+        return redirect(url_for(shop_worker.home_endpoint()))
 
     # Fetch printshops in name order for the directory.
     printshops = PrintShop.query.order_by(PrintShop.name.asc()).all()
