@@ -5,7 +5,7 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from werkzeug.utils import secure_filename
 
 from users import db
-from users.models import PrintRequest, PrintShop, PrintShopServices
+from users.models import PrintRequest, PrintShop
 
 # This blueprint contains the print request form and confirmation page.
 request_bp = Blueprint('request_bp', __name__, template_folder='templates')
@@ -141,14 +141,11 @@ def new_print_request(shop_id):
         return redirect(url_for('auth.login'))
 
     shop = PrintShop.query.get_or_404(shop_id)
-    all_services = PrintShopServices.query.filter_by(
-        printshop_id=shop.id,
-        is_active=True,
-    ).order_by(PrintShopServices.name.asc()).all()
+    all_services = shop.active_services()
     # These are not request types: lamination is selected as a finish instead.
     services = [
         service for service in all_services
-        if service.name.strip().lower() not in REQUEST_HIDDEN_SERVICE_NAMES
+        if service.can_be_requested(REQUEST_HIDDEN_SERVICE_NAMES)
     ]
 
     selected_service_id = request.values.get('service_id', type=int)
@@ -270,10 +267,9 @@ def request_confirmation(request_id):
         flash('Please log in to view your request.', 'error')
         return redirect(url_for('auth.login'))
 
-    print_request = PrintRequest.query.filter_by(
-        id=request_id,
-        customer_account_id=session['user_id'],
-    ).first_or_404()
+    print_request = PrintRequest.query.get_or_404(request_id)
+    if not print_request.belongs_to_customer(session['user_id']):
+        abort(404)
     return render_template('request_submitted.html', print_request=print_request)
 
 
@@ -286,11 +282,10 @@ def view_uploaded_file(request_id, file_index):
     if session.get('user_role') != 'customer':
         abort(403)
 
-    print_request = PrintRequest.query.filter_by(
-        id=request_id,
-        customer_account_id=session['user_id'],
-    ).first_or_404()
-    file_paths = print_request.file_paths if isinstance(print_request.file_paths, list) else []
+    print_request = PrintRequest.query.get_or_404(request_id)
+    if not print_request.belongs_to_customer(session['user_id']):
+        abort(404)
+    file_paths = print_request.uploaded_file_paths()
 
     if file_index < 0 or file_index >= len(file_paths):
         abort(404)

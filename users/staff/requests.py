@@ -3,22 +3,18 @@ import os
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 
 from users import db
-from users.models import Admin, PrintRequest, PrintShop, Staff
+from users.models import Account, PrintRequest
 
 
 shop_requests_bp = Blueprint('shop_requests', __name__, template_folder='templates')
-
-ALLOWED_REQUEST_STATUSES = {
-    'pending', 'accepted', 'in_progress', 'ready', 'completed', 'declined'
-}
-
 
 def _check_shop_user():
     """Require a signed-in staff member or printshop admin."""
     if not session.get('user_id'):
         return redirect(url_for('auth.login'))
 
-    if session.get('user_role') not in {'staff', 'admin'}:
+    account = Account.query.get(session['user_id'])
+    if account is None or not account.is_shop_worker():
         abort(403)
 
     return None
@@ -26,28 +22,14 @@ def _check_shop_user():
 
 def _get_accessible_shops():
     """Return only printshops connected to the signed-in account."""
-    account_id = session['user_id']
-
-    if session.get('user_role') == 'staff':
-        staff_record = Staff.query.filter_by(account_id=account_id).first()
-        if staff_record is None:
-            return []
-        shop = PrintShop.query.filter_by(id=staff_record.printshop_id).first()
-        return [shop] if shop else []
-
-    admin_record = Admin.query.filter_by(account_id=account_id).first()
-    if admin_record is None:
-        return []
-
-    return PrintShop.query.filter_by(
-        admin_account_id=account_id
-    ).order_by(PrintShop.name.asc()).all()
+    account = Account.query.get(session['user_id'])
+    return account.accessible_printshops() if account else []
 
 
 def _get_authorized_request_or_404(request_id, shop_ids):
     """Find a request only if it belongs to one of this user's shops."""
     print_request = PrintRequest.query.filter_by(id=request_id).first_or_404()
-    if print_request.printshop_id not in shop_ids:
+    if not print_request.belongs_to_any_printshop(shop_ids):
         abort(404)
     return print_request
 
@@ -63,7 +45,7 @@ def _get_display_filename(stored_path):
 def _make_request_details(print_request):
     """Prepare request information for the details modal."""
     files = []
-    for file_index, file_path in enumerate(print_request.file_paths or []):
+    for file_index, file_path in enumerate(print_request.uploaded_file_paths()):
         files.append({
             'name': _get_display_filename(file_path),
             'url': url_for(
@@ -152,11 +134,9 @@ def update_status(request_id):
     print_request = _get_authorized_request_or_404(request_id, shop_ids)
     new_status = request.form.get('status', '').strip().lower()
 
-    if new_status not in ALLOWED_REQUEST_STATUSES:
+    if not print_request.change_status(new_status):
         flash('Choose a valid request status.', 'error')
         return redirect(url_for('shop_requests.inbox'))
-
-    print_request.status = new_status
     db.session.commit()
     flash('Request status updated.', 'success')
     return redirect(url_for('shop_requests.inbox'))
@@ -172,7 +152,7 @@ def download_request_file(request_id, file_index):
     shops = _get_accessible_shops()
     shop_ids = [shop.id for shop in shops]
     print_request = _get_authorized_request_or_404(request_id, shop_ids)
-    file_paths = print_request.file_paths or []
+    file_paths = print_request.uploaded_file_paths()
 
     if file_index < 0 or file_index >= len(file_paths):
         abort(404)

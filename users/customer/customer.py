@@ -36,8 +36,7 @@ def printshops():
                 'category': service.category,
                 'description': service.description,
             }
-            for service in sorted(shop.offerings, key=lambda item: item.name.lower())
-            if service.is_active
+            for service in shop.active_services()
         ]
         shop_cards.append({'shop': shop, 'services': services})
 
@@ -77,7 +76,7 @@ def dashboard():
     request_files = {}
     for print_request in print_requests:
         request_files[print_request.id] = []
-        saved_paths = print_request.file_paths if isinstance(print_request.file_paths, list) else []
+        saved_paths = print_request.uploaded_file_paths()
         for file_index, saved_path in enumerate(saved_paths):
             stored_filename = saved_path.replace('\\', '/').rsplit('/', 1)[-1]
             display_filename = stored_filename[33:] if len(stored_filename) > 33 and stored_filename[32] == '_' else stored_filename

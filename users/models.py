@@ -18,6 +18,40 @@ class Account(db.Model):
     staff = db.relationship("Staff", back_populates="account", uselist=False)
     admin = db.relationship("Admin", back_populates="account", uselist=False)
 
+    # These methods keep role checks inside the Account class. Routes can ask
+    # an account what it is allowed to do instead of comparing role text many times.
+    def has_role(self, role_name):
+        """Return True when this account has the given role."""
+        return self.role == role_name
+
+    def is_customer(self):
+        """Return True when this account is a customer."""
+        return self.has_role("customer")
+
+    def is_shop_worker(self):
+        """Return True when this account is staff or an admin."""
+        return self.role in {"staff", "admin"}
+
+    def home_endpoint(self):
+        """Return the Flask page name this account should see after logging in."""
+        if self.is_customer():
+            return "customer_bp.dashboard"
+        if self.has_role("admin"):
+            return "shop_requests.inbox"
+        if self.has_role("staff"):
+            return "staff_bp.index"
+        return "customer_bp.index"
+
+    def accessible_printshops(self):
+        """Return the printshops this staff member or admin can manage."""
+        if self.has_role("staff"):
+            return [self.staff.printshop] if self.staff and self.staff.printshop else []
+
+        if self.has_role("admin"):
+            return sorted(self.admin.printshops, key=lambda shop: shop.name.lower()) if self.admin else []
+
+        return []
+
 
 class Customer(db.Model):
     __tablename__ = "customers"
@@ -63,6 +97,14 @@ class PrintShop(db.Model):
     staff_members = db.relationship("Staff", back_populates="printshop")
     offerings = db.relationship("PrintShopServices", back_populates="printshop")
 
+    # This method returns only active services in a predictable name order.
+    def active_services(self):
+        """Return this printshop's active services and products."""
+        return sorted(
+            (service for service in self.offerings if service.is_active),
+            key=lambda service: service.name.lower(),
+        )
+
 
 class PrintShopServices(db.Model):
     __tablename__ = "printshops_services"
@@ -78,6 +120,11 @@ class PrintShopServices(db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
 
     printshop = db.relationship("PrintShop", back_populates="offerings")
+
+    # Some offerings are displayed in the directory but are not request types.
+    def can_be_requested(self, hidden_service_names):
+        """Return True when customers may use this service in a print request."""
+        return self.is_active and self.name.strip().lower() not in hidden_service_names
 
 
 class PrintRequest(db.Model):
@@ -103,6 +150,31 @@ class PrintRequest(db.Model):
     customer = db.relationship("Account")
     printshop = db.relationship("PrintShop")
     service = db.relationship("PrintShopServices")
+
+    # These values are the only request statuses the system accepts.
+    ALLOWED_STATUSES = {
+        "pending", "accepted", "in_progress", "ready", "completed", "declined"
+    }
+
+    def belongs_to_customer(self, account_id):
+        """Return True when this request was made by the given customer."""
+        return self.customer_account_id == account_id
+
+    def belongs_to_any_printshop(self, shop_ids):
+        """Return True when this request belongs to one of the given printshops."""
+        return self.printshop_id in shop_ids
+
+    def change_status(self, new_status):
+        """Change status only when the supplied status is allowed."""
+        clean_status = (new_status or "").strip().lower()
+        if clean_status not in self.ALLOWED_STATUSES:
+            return False
+        self.status = clean_status
+        return True
+
+    def uploaded_file_paths(self):
+        """Return file paths as a list even if old data is missing or incorrect."""
+        return self.file_paths if isinstance(self.file_paths, list) else []
 
 
 class Staff(db.Model):

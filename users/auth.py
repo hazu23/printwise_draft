@@ -63,14 +63,10 @@ def _registration_error(name, email, password, confirmation):
 def login():
     # A signed-in user should not see the login form again.
     if 'user_id' in session:
-        role = session.get('user_role')
-        if role == 'customer':
-            return redirect(url_for('customer_bp.dashboard'))
-        if role == 'staff':
-            return redirect(url_for('staff_bp.index'))
-        if role == 'admin':
-            return redirect(url_for('shop_requests.inbox'))
-        return redirect(url_for('customer_bp.index'))
+        signed_in_account = Account.query.get(session['user_id'])
+        if signed_in_account:
+            return redirect(url_for(signed_in_account.home_endpoint()))
+        session.clear()
 
     # GET shows the form. POST means the form was submitted.
     if request.method == 'POST':
@@ -89,11 +85,7 @@ def login():
             session['user_name'] = account.full_name
             session['user_role'] = account.role
             flash('Welcome back!', 'success')
-            if account.role == 'customer':
-                return redirect(url_for('customer_bp.dashboard'))
-            if account.role == 'admin':
-                return redirect(url_for('shop_requests.inbox'))
-            return redirect(url_for('customer_bp.index'))
+            return redirect(url_for(account.home_endpoint()))
     return render_template('auth/login.html')
 
 
