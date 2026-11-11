@@ -162,6 +162,11 @@
 
                 <div class="request-secondary-actions">
                     <a id="request-modal-edit" class="btn btn-outline-secondary" href="#" hidden>Edit print request</a>
+                    <button id="request-modal-delete" class="btn btn-outline-danger" type="submit"
+                            formaction="#" formmethod="post" hidden
+                            data-confirm="Permanently delete this in-store print request and its uploaded files? This cannot be undone.">
+                        Delete request
+                    </button>
                     <div id="request-decision-actions" class="request-decision-actions">
                         <button id="request-accept-button" class="btn btn-primary" type="button">Accept request</button>
                         <button id="request-decline-button" class="btn btn-outline-secondary" type="button">Decline</button>

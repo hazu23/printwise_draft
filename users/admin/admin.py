@@ -121,7 +121,7 @@ def printshop_profile():
     if not name or not location:
         flash('Printshop name and location are required.', 'error')
         return _show_profile(shop)
-    if len(name) > 120 or len(location) > 255 or len(description) > 4000:
+    if len(name) > 100 or len(location) > 255 or len(description) > 500:
         flash('One of the printshop text fields is too long.', 'error')
         return _show_profile(shop)
     if contact_phone and not PHONE_PATTERN.fullmatch(contact_phone):

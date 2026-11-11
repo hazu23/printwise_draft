@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import or_
 
 from users import db
+from users.file_cleanup import cleanup_request_files
 from users.models import Account, PrintRequest, PrintShopServices
 from users.notifications import notify_account
 from users.customer.print_requests import (
@@ -141,6 +142,10 @@ def _make_request_details(print_request):
         'is_staff_created': print_request.customer_account_id is None,
         'edit_url': (
             url_for('shop_requests.new_walk_in_request', request_id=print_request.id)
+            if print_request.customer_account_id is None else ''
+        ),
+        'delete_url': (
+            url_for('shop_requests.delete_walk_in_request', request_id=print_request.id)
             if print_request.customer_account_id is None else ''
         ),
         'service': print_request.service.name,
@@ -357,13 +362,13 @@ def new_walk_in_request(request_id):
         return show_form()
 
     customer_name = request.form.get('customer_name', '').strip()
-    if len(customer_name) > 100:
-        flash('Customer name must be 100 characters or fewer.', 'error')
+    if len(customer_name) > 50:
+        flash('Customer name is too long.', 'error')
         return show_form()
 
     customer_contact = request.form.get('customer_contact', '').strip()
-    if len(customer_contact) > 255:
-        flash('Customer contact must be 255 characters or fewer.', 'error')
+    if len(customer_contact) > 100:
+        flash('Customer contact is too long.', 'error')
         return show_form()
 
     try:
@@ -375,8 +380,8 @@ def new_walk_in_request(request_id):
         return show_form()
 
     notes = request.form.get('notes', '').strip()
-    if len(notes) > 4000:
-        flash('Notes must be 4,000 characters or fewer.', 'error')
+    if len(notes) > 500:
+        flash('Additional instructions are too long.', 'error')
         return show_form()
 
     # Validate the service-specific paper size, color, finish, or other fields.
@@ -455,6 +460,32 @@ def new_walk_in_request(request_id):
         'Print request updated.' if is_editing else 'Print request created.',
         'success',
     )
+    return redirect(url_for('shop_requests.inbox'))
+
+
+@shop_requests_bp.route('/requests/<int:request_id>/delete', methods=('POST',))
+def delete_walk_in_request(request_id):
+    """Permanently delete an in-store request owned by this user's printshop."""
+    login_redirect = _check_shop_user()
+    if login_redirect:
+        return login_redirect
+
+    shop_ids = [shop.id for shop in _get_accessible_shops()]
+    print_request = _get_authorized_request_or_404(request_id, shop_ids)
+
+    # Customer-submitted requests must remain in their request history. This
+    # action is intentionally limited to requests created inside the shop.
+    if print_request.customer_account_id is not None:
+        abort(404)
+
+    cleanup_request_files(
+        print_request,
+        current_app.instance_path,
+        include_receipt=True,
+    )
+    db.session.delete(print_request)
+    db.session.commit()
+    flash('In-store print request deleted.', 'success')
     return redirect(url_for('shop_requests.inbox'))
 
 

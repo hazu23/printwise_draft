@@ -15,6 +15,9 @@ class Account(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # customer, staff, or admin
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # New customer accounts must prove that they control their email address.
+    # Existing accounts are migrated as verified so they are not locked out.
+    email_verified = db.Column(db.Boolean, nullable=False, default=True)
     # Staff and admin profiles use these fields. Customer-specific contact and
     # picture fields remain in the customers table for compatibility.
     phone_number = db.Column(db.String(30), nullable=True)
@@ -91,8 +94,8 @@ class PrintShop(db.Model):
     __tablename__ = "printshops"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.Text, nullable=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(500), nullable=True)
     location = db.Column(db.String(255), nullable=False)
     logo_path = db.Column(db.String(255), nullable=True)
     contact_phone = db.Column(db.String(30), nullable=True)
@@ -113,10 +116,6 @@ class PrintShop(db.Model):
     payment_qr_2_path = db.Column(db.String(255), nullable=True)
     payment_qr_2_account_name = db.Column(db.String(100), nullable=True)
     payment_qr_2_account_number = db.Column(db.String(30), nullable=True)
-    # Kept temporarily so older databases can be migrated without losing files.
-    gcash_qr_path = db.Column(db.String(255), nullable=True)
-    maya_qr_path = db.Column(db.String(255), nullable=True)
-
     admin_account_id = db.Column(
         db.Integer, db.ForeignKey("admin.account_id"), nullable=True
     )
@@ -180,9 +179,9 @@ class PrintShopServices(db.Model):
     printshop_id = db.Column(
         db.Integer, db.ForeignKey("printshops.id"), nullable=False
     )
-    name = db.Column(db.String(120), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(20), nullable=False, default="service")
-    description = db.Column(db.Text, nullable=True)
+    description = db.Column(db.String(500), nullable=True)
     options = db.Column(db.JSON, nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
 
@@ -207,8 +206,8 @@ class PrintRequest(db.Model):
     )
     # Walk-in customers may not have a PrintWise account. Their name and
     # optional contact are saved directly on the request instead.
-    walk_in_customer_name = db.Column(db.String(100), nullable=True)
-    walk_in_customer_contact = db.Column(db.String(255), nullable=True)
+    walk_in_customer_name = db.Column(db.String(50), nullable=True)
+    walk_in_customer_contact = db.Column(db.String(100), nullable=True)
     printshop_id = db.Column(
         db.Integer, db.ForeignKey("printshops.id"), nullable=False
     )
@@ -218,7 +217,7 @@ class PrintRequest(db.Model):
     quantity = db.Column(db.Integer, nullable=False, default=1)
     selected_options = db.Column(db.JSON, nullable=False, default=dict)
     file_paths = db.Column(db.JSON, nullable=False, default=list)
-    notes = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(20), nullable=False, default="pending")
     # Staff or admins set this after checking the files and print options.
     # It remains empty until the printshop decides the final price.

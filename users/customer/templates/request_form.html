@@ -43,7 +43,7 @@
 
         <div class="request-form-field">
             <label for="request-notes">Additional instructions <span class="request-optional">(optional)</span></label>
-            <textarea id="request-notes" name="notes" class="form-control" rows="4" maxlength="4000" placeholder="Add any details the printshop should know.">{{ request.form.get('notes', '') }}</textarea>
+            <textarea id="request-notes" name="notes" class="form-control" rows="4" maxlength="500" placeholder="Add any details the printshop should know.">{{ request.form.get('notes', '') }}</textarea>
         </div>
 
         <p class="request-price-note">Prices may vary. The printshop will confirm the price after reviewing your request.</p>

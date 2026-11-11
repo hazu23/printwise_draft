@@ -2,8 +2,8 @@
 <form class="shop-profile-form" method="post" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div><p class="shop-profile-preview-label">ADMIN SETTINGS</p><h2>Customize printshop</h2><p>Update the public details customers use to identify and contact your shop.</p></div>
-    <label>Printshop name<input class="form-control" name="name" value="{{ shop.name }}" maxlength="120" required></label>
-    <label>Description<textarea class="form-control" name="description" rows="4" maxlength="4000">{{ shop.description or '' }}</textarea></label>
+    <label>Printshop name<input class="form-control" name="name" value="{{ shop.name }}" maxlength="100" required></label>
+    <label>Description<textarea class="form-control" name="description" rows="4" maxlength="500">{{ shop.description or '' }}</textarea></label>
     <label>Location<input class="form-control" name="location" value="{{ shop.location }}" maxlength="255" required></label>
     <div class="shop-profile-form-grid"><label>Phone<input class="form-control" name="contact_phone" value="{{ shop.contact_phone or '' }}" maxlength="30" pattern="[0-9+()\- ]{7,30}"></label><label>Email<input class="form-control" name="contact_email" type="email" value="{{ shop.contact_email or '' }}" maxlength="255"></label></div>
     <label>Website or Facebook URL<input class="form-control" name="website" type="url" value="{{ shop.website or '' }}" maxlength="255"></label>

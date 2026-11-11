@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Verify email | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('static', filename='auth/auth.css') }}">{% endblock %}
+
+{% block content %}
+<section class="auth-layout login-layout">
+    <div class="auth-intro">
+        <span class="auth-kicker">EMAIL VERIFICATION</span>
+        <h1>Check your inbox.</h1>
+        <p>Open the link sent by PrintWise to verify your email address. The link expires after 24 hours.</p>
+    </div>
+    <div class="auth-card">
+        <h2>Resend verification email</h2>
+        <p class="auth-subtitle">Enter the email address used to create your account.</p>
+        <form method="post" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="email">Email address</label>
+            <input id="email" name="email" type="email" autocomplete="email" maxlength="100" required value="{{ email }}">
+            <button class="auth-submit" type="submit">Send verification email <span>→</span></button>
+        </form>
+        <p class="auth-switch"><a href="{{ url_for('auth.login') }}">Return to login</a></p>
+    </div>
+</section>
+{% block footer %}{% endblock %}
+{% endblock %}

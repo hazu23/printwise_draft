@@ -134,6 +134,19 @@ body {
     box-shadow: 0 0 0 3px #356ae61c;
 }
 
+.auth-form-link {
+    justify-self: end;
+    color: var(--print-blue);
+    font-size: 10px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-form-link:hover,
+.auth-form-link:focus-visible {
+    text-decoration: underline;
+}
+
 .auth-submit {
     display: flex;
     justify-content: space-between;

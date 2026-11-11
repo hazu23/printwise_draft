@@ -81,6 +81,7 @@ def create_staff():
             password_hash=generate_password_hash(password),
             role='staff',
             is_active=True,
+            email_verified=True,
         )
         db.session.add(staff_account)
         db.session.flush()

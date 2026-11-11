@@ -25,13 +25,13 @@
         <div class="request-form-field">
             <label for="walk-in-customer-name">Customer name <span class="request-optional">(optional)</span></label>
             <input id="walk-in-customer-name" name="customer_name" class="form-control" type="text"
-                   maxlength="100" value="{{ request.form.get('customer_name', existing_name or '') }}">
+                   maxlength="50" value="{{ request.form.get('customer_name', existing_name or '') }}">
         </div>
 
         <div class="request-form-field">
             <label for="walk-in-customer-contact">Customer contact <span class="request-optional">(optional)</span></label>
             <input id="walk-in-customer-contact" name="customer_contact" class="form-control" type="text"
-                   maxlength="255" placeholder="Email address or phone number"
+                   maxlength="100" placeholder="Email address or phone number"
                    value="{{ request.form.get('customer_contact', existing_contact or '') }}">
         </div>
 
@@ -74,7 +74,7 @@
 
         <div class="request-form-field">
             <label for="request-notes">Additional instructions <span class="request-optional">(optional)</span></label>
-            <textarea id="request-notes" name="notes" class="form-control" rows="4" maxlength="4000"
+            <textarea id="request-notes" name="notes" class="form-control" rows="4" maxlength="500"
                       placeholder="Add any details about the print request.">{{ request.form.get('notes', existing_notes or '') }}</textarea>
         </div>
 

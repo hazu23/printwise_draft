@@ -14,6 +14,14 @@ db = SQLAlchemy()
 DATABASE_URL = "mysql+pymysql://printwise:printwise123@localhost/printwisedb"
 
 
+def _environment_flag(name, default=False):
+    """Read a true/false environment setting in a beginner-friendly format."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _is_production():
     """Return True when the app is intentionally running as production."""
     environment = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'development'))
@@ -52,6 +60,19 @@ def create_app():
     if production and not environment_database:
         raise RuntimeError('DATABASE_URL must be set in the production environment.')
     app.config['SQLALCHEMY_DATABASE_URI'] = environment_database or DATABASE_URL
+    # SMTP credentials are read from environment variables so passwords are
+    # never committed to source control. Port 587 with TLS works for Gmail and
+    # many other providers; deployments can override every setting.
+    app.config['SMTP_HOST'] = os.environ.get('SMTP_HOST', '')
+    app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', '587'))
+    app.config['SMTP_USERNAME'] = os.environ.get('SMTP_USERNAME', '')
+    app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD', '')
+    app.config['SMTP_FROM_EMAIL'] = os.environ.get('SMTP_FROM_EMAIL', '')
+    app.config['SMTP_USE_TLS'] = _environment_flag('SMTP_USE_TLS', True)
+    app.config['SMTP_USE_SSL'] = _environment_flag('SMTP_USE_SSL', False)
+    app.config['PUBLIC_BASE_URL'] = os.environ.get('PUBLIC_BASE_URL', '').rstrip('/')
+    app.config['EMAIL_VERIFY_MAX_AGE'] = 24 * 60 * 60
+    app.config['PASSWORD_RESET_MAX_AGE'] = 60 * 60
     # Flask stores a signed session identifier in a cookie. These settings keep
     # JavaScript from reading it, restrict cross-site sending, and expire it.
     app.config['SESSION_COOKIE_NAME'] = 'printwise_session'

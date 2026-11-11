@@ -249,8 +249,8 @@ def new_print_request(shop_id):
         return show_form()
 
     notes = request.form.get('notes', '').strip()
-    if len(notes) > 4000:
-        flash('Notes must be 4,000 characters or fewer.', 'error')
+    if len(notes) > 500:
+        flash('Additional instructions are too long.', 'error')
         return show_form()
 
     # Read only the option fields configured for the selected service.

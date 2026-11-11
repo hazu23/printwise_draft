@@ -11,9 +11,9 @@
         <form class="admin-form-card" method="post" action="{{ url_for('admin_services.create_service') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div><h2>Add an offering</h2><p>New active services appear in your public profile immediately.</p></div>
-            <label>Name<input class="form-control" name="name" maxlength="120" required></label>
+            <label>Name<input class="form-control" name="name" maxlength="100" required></label>
             <label>Category<select class="form-select" name="category" required><option value="service">Service</option><option value="product">Product</option></select></label>
-            <label>Description<textarea class="form-control" name="description" rows="4" maxlength="1000" placeholder="Explain what customers can order."></textarea></label>
+            <label>Description<textarea class="form-control" name="description" rows="4" maxlength="500" placeholder="Explain what customers can order."></textarea></label>
             <button class="btn btn-primary" type="submit">Add service or product</button>
         </form>
 
@@ -26,9 +26,9 @@
                     <div class="admin-service-editor">
                         <form method="post" action="{{ url_for('admin_services.edit_service', service_id=offering.id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <label>Name<input class="form-control" name="name" value="{{ offering.name }}" maxlength="120" required></label>
+                            <label>Name<input class="form-control" name="name" value="{{ offering.name }}" maxlength="100" required></label>
                             <label>Category<select class="form-select" name="category"><option value="service" {% if offering.category == 'service' %}selected{% endif %}>Service</option><option value="product" {% if offering.category == 'product' %}selected{% endif %}>Product</option></select></label>
-                            <label>Description<textarea class="form-control" name="description" rows="3" maxlength="1000">{{ offering.description or '' }}</textarea></label>
+                            <label>Description<textarea class="form-control" name="description" rows="3" maxlength="500">{{ offering.description or '' }}</textarea></label>
                             <button class="btn btn-primary btn-sm" type="submit">Save changes</button>
                         </form>
                         {% set option_config = option_configs.get(offering.id, {}) %}

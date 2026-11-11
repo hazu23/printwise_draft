@@ -19,7 +19,8 @@
             <label for="email">Email address</label>
             <input id="email" name="email" type="email" autocomplete="email" required value="{{ request.form.get('email', '') }}">
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+            <a class="auth-form-link" href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
             <button class="auth-submit" type="submit">Log in <span>→</span></button>
         </form>
         <p class="auth-switch">New to PrintWise? <a href="{{ url_for('auth.register') }}">Create an account</a></p>

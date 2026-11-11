@@ -36,12 +36,12 @@ def _service_values():
 def _service_error(name, category, description):
     if not name:
         return 'Enter a service or product name.'
-    if len(name) > 120:
-        return 'The service name must be 120 characters or fewer.'
+    if len(name) > 100:
+        return 'The service name is too long.'
     if category not in ALLOWED_CATEGORIES:
         return 'Choose Service or Product as the category.'
-    if len(description) > 1000:
-        return 'The description must be 1,000 characters or fewer.'
+    if len(description) > 500:
+        return 'The description is too long.'
     return None
 
 

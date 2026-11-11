@@ -23,6 +23,7 @@ This checklist uses simple descriptions so it is easy to follow while building t
 - [x] Customer, staff, and admin profile pages
 - [x] CSRF protection and custom error pages
 - [x] Prevent repeated payment uploads after a receipt is submitted
+- [x] SMTP email verification and password reset links
 
 ## Recommended Next Tasks
 
@@ -44,6 +45,7 @@ This checklist uses simple descriptions so it is easy to follow while building t
 
 - [ ] Use a production WSGI server instead of Flask's development server
 - [ ] Set `APP_ENV=production` and a strong `SECRET_KEY`
+- [ ] Configure SMTP credentials and the public website URL as environment secrets
 - [ ] Use a production MySQL user with limited permissions
 - [ ] Enable HTTPS so secure session cookies work
 - [ ] Back up the database and uploaded files automatically

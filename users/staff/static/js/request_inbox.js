@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paymentSelect = byId('request-payment-select');
     const priceInput = byId('request-price-input');
     const decisionActions = byId('request-decision-actions');
+    const deleteButton = byId('request-modal-delete');
 
     // Open the modal with the details for the row the staff member selected.
     modal.addEventListener('show.bs.modal', (event) => {
@@ -111,6 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const editLink = byId('request-modal-edit');
         editLink.hidden = !selectedRequest.is_staff_created;
         editLink.href = selectedRequest.edit_url || '#';
+
+        // Only requests created inside the printshop may be permanently deleted.
+        deleteButton.hidden = !selectedRequest.is_staff_created;
+        deleteButton.formAction = selectedRequest.delete_url || '#';
 
         // Add secure download links that the server checks against this user's shop.
         const fileList = byId('request-modal-files');
