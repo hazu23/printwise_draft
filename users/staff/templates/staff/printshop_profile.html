@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Printshop Profile | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('static', filename='css/printshop_profile.css') }}">{% endblock %}
+
+{% block content %}
+<section class="shop-profile-page" aria-labelledby="shop-profile-heading">
+    <header class="shop-profile-heading">
+        <div><p class="shop-profile-eyebrow">YOUR PRINTSHOP</p><h1 id="shop-profile-heading">Printshop profile</h1><p>This is the information customers see in the PrintWise directory.</p></div>
+        {% if session.get('user_role') == 'staff' %}<span class="shop-profile-readonly">View only</span>{% endif %}
+    </header>
+
+    {% if not shop %}
+        <div class="shop-profile-empty"><h2>No printshop is linked to this account</h2><p>Ask an administrator to assign this account to a printshop.</p></div>
+    {% else %}
+    {% set payment_options = shop.payment_options() %}
+    <div class="shop-profile-layout">
+        <article class="shop-profile-preview" aria-label="Customer preview">
+            <p class="shop-profile-preview-label">CUSTOMER PREVIEW</p>
+            <header class="shop-profile-card-header">
+                {% if shop.logo_path %}<img class="shop-profile-logo" src="{{ url_for('customer_bp.static', filename=shop.logo_path) }}" alt="{{ shop.name }} logo">
+                {% else %}<span class="shop-profile-initial" aria-hidden="true">{{ shop.name[0]|upper }}</span>{% endif %}
+                <div><h2>{{ shop.name }}</h2><p>{{ shop.location }}</p></div>
+            </header>
+            <section class="shop-profile-section"><h3>About this printshop</h3><p>{{ shop.description or 'This printshop has not added a description yet.' }}</p></section>
+            <section class="shop-profile-section">
+                <h3>Services and products</h3>
+                {% if services %}<ul>{% for service in services %}<li>{{ service.name }}</li>{% endfor %}</ul>{% else %}<p>No active services have been added yet.</p>{% endif %}
+            </section>
+            <section class="shop-profile-section">
+                <h3>Contact and hours</h3>
+                <dl>
+                    {% if shop.contact_phone %}<div><dt>Phone</dt><dd>{{ shop.contact_phone }}</dd></div>{% endif %}
+                    {% if shop.contact_email %}<div><dt>Email</dt><dd>{{ shop.contact_email }}</dd></div>{% endif %}
+                    {% if shop.website %}<div><dt>Website</dt><dd><a href="{{ shop.website }}" target="_blank" rel="noopener noreferrer">Facebook profile</a></dd></div>{% endif %}
+                    {% if shop.business_hours %}<div><dt>Hours</dt><dd>{{ shop.business_hours }}</dd></div>{% endif %}
+                </dl>
+                {% if not shop.contact_phone and not shop.contact_email and not shop.website and not shop.business_hours %}<p>Contact details have not been added yet.</p>{% endif %}
+            </section>
+            <section class="shop-profile-section">
+                <h3>Online payment</h3>
+                {% if payment_options %}
+                <div class="shop-profile-payment-options">
+                    {% for option in payment_options %}
+                    <div class="shop-profile-payment-option">
+                        <p class="shop-profile-qr-name">{{ option.name }}</p>
+                        {% if option.account_name %}<p><strong>Account name:</strong> {{ option.account_name }}</p>{% endif %}
+                        {% if option.account_number %}<p><strong>Account number:</strong> {{ option.account_number }}</p>{% endif %}
+                        <img class="shop-profile-qr" src="{{ url_for('staff_bp.view_payment_qr', slot=option.slot) }}" alt="{{ option.name }} payment QR preview">
+                        <button class="btn btn-outline-secondary btn-sm shop-profile-view-qr" type="button" data-bs-toggle="modal" data-bs-target="#payment-qr-{{ option.slot }}-modal">View Image</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}<p>No payment QR has been configured.</p>{% endif %}
+            </section>
+        </article>
+
+        {% if session.get('user_role') == 'admin' %}
+            {% include 'admin/_printshop_settings.html' %}
+        {% endif %}
+    </div>
+
+    {% if shop.logo_path %}
+    <div class="modal fade" id="profile-picture-preview-modal" tabindex="-1" aria-labelledby="profile-picture-preview-heading" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shop-image-modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="profile-picture-preview-heading">{{ shop.name }} profile picture</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body"><img src="{{ url_for('customer_bp.static', filename=shop.logo_path) }}" alt="{{ shop.name }} profile picture"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% for option in payment_options %}
+    <div class="modal fade" id="payment-qr-{{ option.slot }}-modal" tabindex="-1" aria-labelledby="payment-qr-{{ option.slot }}-heading" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shop-image-modal-content">
+                <div class="modal-header">
+                    <div><h2 class="modal-title h5" id="payment-qr-{{ option.slot }}-heading">{{ option.name }} payment QR</h2><p class="text-secondary small mb-0">{{ shop.name }}</p></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body"><img class="shop-qr-modal-image" src="{{ url_for('staff_bp.view_payment_qr', slot=option.slot) }}" alt="{{ option.name }} payment QR code"></div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</section>
+{% endblock %}

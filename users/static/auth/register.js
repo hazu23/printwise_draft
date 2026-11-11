@@ -1,4 +1,4 @@
-// Get the registration form fields and their feedback areas from the page.
+// Registration-page validation and email feedback.
 const fullNameInput = document.getElementById("name");
 const registrationForm = fullNameInput?.form;
 const fullNameFeedback = document.getElementById("name-help");

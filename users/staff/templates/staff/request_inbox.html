@@ -14,6 +14,11 @@
             <h1 id="request-inbox-heading">Print requests</h1>
             <p class="text-secondary mb-0">Review customer requests, open their files, and update request status.</p>
         </div>
+        {% if has_shop %}
+            <div class="request-heading-actions">
+                <a class="btn btn-primary" href="{{ url_for('shop_requests.new_walk_in_request') }}">Create print request</a>
+            </div>
+        {% endif %}
     </header>
 
     {% if not has_shop %}
@@ -32,14 +37,14 @@
                 <button class="request-filter is-active" type="button" data-request-filter="all" aria-pressed="true">All <span>{{ status_counts.all }}</span></button>
                 <button class="request-filter" type="button" data-request-filter="pending" aria-pressed="false">Pending <span>{{ status_counts.pending }}</span></button>
                 <button class="request-filter" type="button" data-request-filter="accepted" aria-pressed="false">Accepted <span>{{ status_counts.accepted }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="in_progress" aria-pressed="false">In progress <span>{{ status_counts.in_progress }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="ready" aria-pressed="false">Ready <span>{{ status_counts.ready }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="in_progress" aria-pressed="false">Printing <span>{{ status_counts.in_progress }}</span></button>
+                <button class="request-filter" type="button" data-request-filter="ready" aria-pressed="false">Ready for pick up <span>{{ status_counts.ready }}</span></button>
                 <button class="request-filter" type="button" data-request-filter="completed" aria-pressed="false">Completed <span>{{ status_counts.completed }}</span></button>
                 <button class="request-filter" type="button" data-request-filter="declined" aria-pressed="false">Declined <span>{{ status_counts.declined }}</span></button>
             </div>
 
             <div class="request-inbox-column-labels" aria-hidden="true">
-                <span>Customer and request</span><span>Submitted</span><span>Status</span><span>Files</span>
+                <span>Customer and request</span><span>Submitted</span><span>Status</span><span>Price</span><span>Payment</span><span>Files</span>
             </div>
 
             <div id="request-inbox-list" class="request-inbox-list">
@@ -47,19 +52,21 @@
                     <button class="request-inbox-row" type="button"
                             data-request-id="{{ item.id }}"
                             data-request-status="{{ item.status }}"
-                            data-status-url="{{ url_for('shop_requests.update_status', request_id=item.id) }}"
+                            data-update-url="{{ url_for('shop_requests.update_request', request_id=item.id) }}"
                             data-bs-toggle="modal" data-bs-target="#request-details-modal"
                             aria-label="Open request {{ item.id }} from {{ item.customer_name }}">
                         <span class="request-row-customer">
                             <span class="request-row-avatar" aria-hidden="true">{{ item.customer_name[:1]|upper }}</span>
                             <span class="request-row-copy">
                                 <strong>{{ item.customer_name }}</strong>
-                                <span>{{ item.service }} · {{ item.quantity }} {{ item.quantity_unit }}</span>
+                                <span>{{ item.service }} · {{ item.quantity }} {{ item.quantity_unit }}{% if item.is_staff_created %} · Staff-created{% endif %}</span>
                                 {% if shops|length > 1 %}<small>{{ item.shop }}</small>{% endif %}
                             </span>
                         </span>
                         <span class="request-row-date">{{ item.submitted }}</span>
                         <span class="request-status-badge status-{{ item.status }}">{{ item.status_label }}</span>
+                        <span class="request-row-price {% if not item.price %}is-unset{% endif %}">{{ item.price_label }}</span>
+                        <span class="request-payment-badge payment-{{ item.payment_status }}">{{ item.payment_status_label }}</span>
                         <span class="request-row-files">{{ item.files|length }} file{{ 's' if item.files|length != 1 else '' }}</span>
                     </button>
                 {% else %}
@@ -76,6 +83,7 @@
 <div class="modal fade" id="request-details-modal" tabindex="-1" aria-labelledby="request-modal-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content request-details-modal-content">
+            <form id="request-update-form" method="post" action="" class="request-update-form-shell">
             <div class="modal-header">
                 <div>
                     <h2 class="modal-title fs-5" id="request-modal-title">Request details</h2>
@@ -101,33 +109,73 @@
                     <p id="request-modal-notes" class="request-modal-notes"></p>
                 </section>
 
+                <section class="request-modal-section" aria-labelledby="request-modal-price-heading">
+                    <h3 id="request-modal-price-heading">Request price</h3>
+                    <p id="request-modal-price-current" class="request-modal-price-current"></p>
+                    <div class="request-price-form">
+                        <label for="request-price-input">Price in Philippine pesos</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            <input id="request-price-input" name="price" class="form-control" type="number"
+                                   min="0.01" max="99999999.99" step="0.01" inputmode="decimal"
+                                   placeholder="Leave blank if the price is not set yet">
+                        </div>
+                    </div>
+                </section>
+
+                <section id="request-modal-receipt-section" class="request-modal-section" aria-labelledby="request-modal-receipt-heading" hidden>
+                    <h3 id="request-modal-receipt-heading">Payment receipt</h3>
+                    <p id="request-modal-payment-method" class="request-modal-notes"></p>
+                    <a id="request-modal-receipt-link" class="request-modal-file-link" href="#" target="_blank" rel="noopener">View uploaded receipt</a>
+                </section>
+
                 <section class="request-modal-section" aria-labelledby="request-modal-files-heading">
                     <h3 id="request-modal-files-heading">Uploaded files</h3>
                     <div id="request-modal-files" class="request-modal-files"></div>
                 </section>
             </div>
+
             <div class="modal-footer request-modal-footer">
-                <form id="request-status-form" method="post" action="" class="request-status-form">
-                    <label for="request-status-select">Update status</label>
-                    <select id="request-status-select" name="status" class="form-select">
-                        <option value="pending">Pending</option>
-                        <option value="accepted">Accepted</option>
-                        <option value="in_progress">In progress</option>
-                        <option value="ready">Ready</option>
-                        <option value="completed">Completed</option>
-                        <option value="declined">Declined</option>
-                    </select>
-                    <button class="btn btn-primary" type="submit">Save status</button>
-                </form>
-                <div id="request-decision-actions" class="request-decision-actions">
-                    <button id="request-accept-button" class="btn btn-primary" type="button">Accept request</button>
-                    <button id="request-decline-button" class="btn btn-outline-secondary" type="button">Decline</button>
+                <div class="request-update-forms">
+                    <div class="request-update-form">
+                        <label for="request-status-select">Request status</label>
+                        <select id="request-status-select" name="status" class="form-select">
+                            <option value="pending">Pending</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="in_progress">Printing</option>
+                            <option value="ready">Ready for pick up</option>
+                            <option value="completed">Completed</option>
+                            <option value="declined">Declined</option>
+                        </select>
+                    </div>
+
+                    <div class="request-update-form">
+                        <label for="request-payment-select">Payment status</label>
+                        <select id="request-payment-select" name="payment_status" class="form-select">
+                            <option value="unpaid">Unpaid</option>
+                            <option value="for_verification">For verification</option>
+                            <option value="partially_paid">Partially paid</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="request-secondary-actions">
+                    <a id="request-modal-edit" class="btn btn-outline-secondary" href="#" hidden>Edit print request</a>
+                    <div id="request-decision-actions" class="request-decision-actions">
+                        <button id="request-accept-button" class="btn btn-primary" type="button">Accept request</button>
+                        <button id="request-decline-button" class="btn btn-outline-secondary" type="button">Decline</button>
+                    </div>
+                    <button class="btn request-save-button" type="submit">Save changes</button>
                 </div>
             </div>
+            </form>
         </div>
     </div>
 </div>
+
 <script id="request-inbox-data" type="application/json">{{ request_details|tojson }}</script>
+{% block footer %}{% endblock %}
 {% endblock %}
 
 {% block scripts %}

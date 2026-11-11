@@ -36,8 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const byId = (id) => document.getElementById(id);
-    const statusForm = byId('request-status-form');
+    const updateForm = byId('request-update-form');
     const statusSelect = byId('request-status-select');
+    const paymentSelect = byId('request-payment-select');
+    const priceInput = byId('request-price-input');
     const decisionActions = byId('request-decision-actions');
 
     // Open the modal with the details for the row the staff member selected.
@@ -53,8 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
         byId('request-modal-customer-name').textContent = selectedRequest.customer_name;
 
         const emailLink = byId('request-modal-customer-email');
-        emailLink.textContent = selectedRequest.customer_email;
-        emailLink.href = `mailto:${selectedRequest.customer_email}`;
+        emailLink.textContent = selectedRequest.customer_contact;
+        if (selectedRequest.customer_email) {
+            emailLink.href = `mailto:${selectedRequest.customer_email}`;
+        } else {
+            emailLink.removeAttribute('href');
+        }
 
         const statusBadge = byId('request-modal-status');
         statusBadge.className = `request-status-badge status-${selectedRequest.status}`;
@@ -85,6 +91,24 @@ document.addEventListener('DOMContentLoaded', () => {
         notes.textContent = selectedRequest.notes || 'No additional instructions.';
         byId('request-modal-notes-section').hidden = !selectedRequest.notes;
 
+        // Show the current amount. One form saves price, request status, and payment status.
+        byId('request-modal-price-current').textContent = selectedRequest.price_label;
+        priceInput.value = selectedRequest.price;
+        updateForm.action = selectedRow.dataset.updateUrl;
+
+        // Display a submitted GCash/Maya receipt for staff verification.
+        const receiptSection = byId('request-modal-receipt-section');
+        receiptSection.hidden = !selectedRequest.payment_receipt_url;
+        byId('request-modal-payment-method').textContent = selectedRequest.payment_method
+            ? `Submitted through ${selectedRequest.payment_method}`
+            : '';
+        byId('request-modal-receipt-link').href = selectedRequest.payment_receipt_url || '#';
+
+        // Only staff-created requests can open the full edit form.
+        const editLink = byId('request-modal-edit');
+        editLink.hidden = !selectedRequest.is_staff_created;
+        editLink.href = selectedRequest.edit_url || '#';
+
         // Add secure download links that the server checks against this user's shop.
         const fileList = byId('request-modal-files');
         fileList.replaceChildren();
@@ -105,18 +129,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         statusSelect.value = selectedRequest.status;
-        statusForm.action = selectedRow.dataset.statusUrl;
+        paymentSelect.value = selectedRequest.payment_status;
         decisionActions.hidden = selectedRequest.status !== 'pending';
     });
 
-    // The quick buttons set the matching status and submit the same status form.
+    // The quick buttons set the matching status and submit the unified form.
     byId('request-accept-button')?.addEventListener('click', () => {
         statusSelect.value = 'accepted';
-        statusForm.requestSubmit();
+        updateForm.requestSubmit();
     });
 
     byId('request-decline-button')?.addEventListener('click', () => {
         statusSelect.value = 'declined';
-        statusForm.requestSubmit();
+        updateForm.requestSubmit();
+    });
+
+    // Choosing any status other than Pending means the shop has already
+    // handled the request, so a separate Accept/Decline choice is unnecessary.
+    statusSelect.addEventListener('change', () => {
+        decisionActions.hidden = statusSelect.value !== 'pending';
     });
 });

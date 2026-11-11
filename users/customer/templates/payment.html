@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Pay Online | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('customer_bp.static', filename='css/payment.css') }}">{% endblock %}
+
+{% block content %}
+<section class="payment-page" aria-labelledby="payment-heading">
+    <a class="payment-back-link" href="{{ url_for('customer_bp.dashboard') }}">← Back to my requests</a>
+
+    <header class="payment-heading">
+        <p class="payment-eyebrow">ONLINE PAYMENT</p>
+        <h1 id="payment-heading">Pay with a QR code</h1>
+        <p>Scan the printshop's QR code, pay the request amount, then upload a screenshot of the receipt.</p>
+    </header>
+
+    <div class="payment-summary">
+        <div>
+            <span>Request #{{ print_request.id }}</span>
+            <strong>{{ print_request.printshop.name }}</strong>
+            <small>{{ print_request.service.name }}</small>
+        </div>
+        <div class="payment-amount">
+            <span>Amount to pay</span>
+            <strong>₱{{ "{:,.2f}".format(print_request.price) }}</strong>
+        </div>
+    </div>
+
+    {% if payment_qr_available %}
+    <form class="payment-form" method="post" enctype="multipart/form-data">
+        <fieldset>
+            <legend>1. Choose a payment service to view its QR code</legend>
+            <div class="payment-methods">
+                {% for option in payment_options %}
+                <div class="payment-option">
+                    <button class="payment-option-toggle" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#payment-option-{{ option.slot }}"
+                            aria-expanded="false"
+                            aria-controls="payment-option-{{ option.slot }}">
+                        <span>{{ option.name }}</span>
+                        <span class="payment-option-arrow" aria-hidden="true">⌄</span>
+                    </button>
+
+                    <div class="collapse" id="payment-option-{{ option.slot }}">
+                        <div class="payment-method-card">
+                            {% if option.account_name %}<span class="payment-account-detail"><strong>Account name:</strong> {{ option.account_name }}</span>{% endif %}
+                            {% if option.account_number %}<span class="payment-account-detail"><strong>Account number:</strong> {{ option.account_number }}</span>{% endif %}
+                            <img class="payment-qr-image"
+                                 src="{{ url_for('request_bp.view_printshop_payment_qr', shop_id=print_request.printshop_id, slot=option.slot) }}"
+                                 alt="{{ print_request.printshop.name }} {{ option.name }} QR code">
+                            <small>Use {{ option.name }} to scan and pay</small>
+                            <button class="btn btn-outline-secondary btn-sm payment-view-image" type="button"
+                                    data-bs-toggle="modal" data-bs-target="#customer-payment-qr-{{ option.slot }}-modal">
+                                View Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <div class="payment-receipt-field">
+            <label for="payment-receipt">2. Upload your receipt screenshot</label>
+            <input id="payment-receipt" name="receipt" class="form-control" type="file"
+                   accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
+            <small>Accepted files: JPG or PNG. Make sure the amount and reference number are readable.</small>
+        </div>
+
+        {% if print_request.payment_receipt_path %}
+            <p class="payment-existing-receipt">
+                A receipt was already submitted.
+                <a href="{{ url_for('request_bp.view_payment_receipt', request_id=print_request.id) }}" target="_blank" rel="noopener">View receipt</a>
+            </p>
+        {% endif %}
+
+        <div class="payment-actions">
+            <a class="btn btn-outline-secondary" href="{{ url_for('customer_bp.dashboard') }}">Cancel</a>
+            <button class="btn btn-primary" type="submit">Submit</button>
+        </div>
+    </form>
+    {% else %}
+        <div class="payment-unavailable" role="status">
+            <h2>Online QR payment is not available yet</h2>
+            <p>This printshop has not configured an online payment QR. You can still pay directly at the printshop.</p>
+        </div>
+    {% endif %}
+
+    {% for option in payment_options %}
+    <div class="modal fade" id="customer-payment-qr-{{ option.slot }}-modal" tabindex="-1"
+         aria-labelledby="customer-payment-qr-{{ option.slot }}-heading" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content payment-image-modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title h5" id="customer-payment-qr-{{ option.slot }}-heading">{{ option.name }} payment QR</h2>
+                        <p class="text-secondary small mb-0">{{ print_request.printshop.name }}</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img src="{{ url_for('request_bp.view_printshop_payment_qr', shop_id=print_request.printshop_id, slot=option.slot) }}"
+                         alt="Enlarged {{ option.name }} payment QR code">
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+{% endblock %}

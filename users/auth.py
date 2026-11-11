@@ -29,6 +29,11 @@ def _is_valid_email(email):
     return domain in Allowed_Emails
 
 
+def is_valid_email(email):
+    """Public email check reused by customer profile editing."""
+    return _is_valid_email(email)
+
+
 # Return an error message for the first invalid field. Return None if everything is fine.
 def _registration_error(name, email, password, confirmation):
     if not name or not email or not password or not confirmation:
@@ -84,6 +89,13 @@ def login():
             session['user_id'] = account.id
             session['user_name'] = account.full_name
             session['user_role'] = account.role
+            session['user_profile_picture'] = (
+                account.customer.profile_picture_path
+                if account.is_customer() and account.customer
+                else None
+            )
+            # Keep the signed-in session for up to the configured eight hours.
+            session.permanent = True
             flash('Welcome back!', 'success')
             return redirect(url_for(account.home_endpoint()))
     return render_template('auth/login.html')

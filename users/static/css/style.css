@@ -1,4 +1,4 @@
-/* Shared color tokens used across the landing page and printshop directory. */
+/* Shared styles used by customer, staff, admin, and authentication pages. */
 :root {
     --ink-navy: #18324b;
     --print-blue: #356ae6;
@@ -29,6 +29,8 @@ body {
 /* Keep the signed-in directory link centered on wide navigation bars. */
 .printwise-nav-container {
     position: relative;
+    padding-right: clamp(1rem, 2.5vw, 2.5rem);
+    padding-left: clamp(1rem, 2.5vw, 2.5rem);
 }
 
 .printshops-nav-slot {
@@ -743,6 +745,23 @@ body.landing-page {
     margin-top: 0.15rem;
 }
 
+.request-existing-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.8rem;
+    color: var(--slate);
+    font-size: 0.82rem;
+}
+
+.request-existing-files strong {
+    flex-basis: 100%;
+    color: var(--ink-navy);
+}
+
+.request-existing-files a {
+    color: var(--print-blue);
+}
+
 .request-file-list-heading {
     margin: 0.25rem 0 0.5rem;
     color: var(--ink-navy);
@@ -1015,6 +1034,12 @@ html {
     font-weight: 700;
 }
 
+.pw-navbar .printwise-profile-avatar-image {
+    display: block;
+    padding: 0;
+    object-fit: cover;
+}
+
 .pw-navbar .printwise-profile-copy {
     display: flex;
     flex-direction: column;
@@ -1030,6 +1055,41 @@ html {
 .pw-navbar .printwise-profile-role {
     color: #dce7ff !important;
     font-size: 0.75rem;
+}
+
+/* Customer profile button and its account dropdown. */
+.pw-navbar .printwise-profile-button {
+    color: inherit;
+    cursor: pointer;
+}
+
+.pw-navbar .printwise-profile-button:hover .printwise-profile-name,
+.pw-navbar .printwise-profile-button:focus-visible .printwise-profile-name {
+    text-decoration: underline;
+}
+
+.pw-navbar .printwise-profile-button:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.45);
+    outline-offset: 4px;
+    border-radius: 0.5rem;
+}
+
+.pw-navbar .printwise-profile-button.dropdown-toggle::after {
+    margin-left: 0.25rem;
+    color: white;
+}
+
+.printwise-profile-menu {
+    min-width: 190px;
+    padding: 0.45rem;
+    border: 1px solid #dce3ed;
+    border-radius: 0.7rem;
+    box-shadow: 0 0.7rem 1.8rem rgba(18, 35, 55, 0.18);
+}
+
+.printwise-profile-menu .dropdown-item {
+    border-radius: 0.45rem;
+    font-size: 0.88rem;
 }
 
 /* Footer in navy */
@@ -1052,4 +1112,110 @@ html {
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
+}
+
+/* ---------- Shared motion and interaction feedback ---------- */
+@keyframes pw-fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pw-dropdown-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pw-flash-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Give each new page a short entrance instead of appearing abruptly. */
+main > section {
+    animation: pw-fade-up 0.35s ease-out both;
+}
+
+/* Flash messages slide in after login, saving, or validation. */
+.flash-message {
+    animation: pw-flash-in 0.3s ease-out both;
+}
+
+/* Buttons and navigation links respond gently to hover and pressing. */
+.btn,
+.auth-submit,
+.printshops-nav-link,
+.dropdown-item {
+    transition: transform 0.16s ease, box-shadow 0.16s ease,
+                background-color 0.16s ease, border-color 0.16s ease,
+                color 0.16s ease;
+}
+
+.btn:hover,
+.auth-submit:hover {
+    transform: translateY(-1px);
+}
+
+.btn:active,
+.auth-submit:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Bootstrap dropdowns animate when they become visible. */
+.dropdown-menu.show {
+    transform-origin: top right;
+    animation: pw-dropdown-in 0.18s ease-out both;
+}
+
+/* Bootstrap already moves the dialog; this also fades and scales it. */
+.modal.fade .modal-dialog {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.modal.show .modal-dialog {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Shared cards receive consistent depth feedback. */
+.printshop-card,
+.request-summary-card,
+.customer-request-row,
+.request-inbox-row,
+.shop-profile-preview,
+.shop-profile-form,
+.customer-profile-summary,
+.customer-profile-form {
+    transition: transform 0.18s ease, box-shadow 0.18s ease,
+                border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.printshop-card:hover,
+.request-summary-card:hover,
+.shop-profile-preview:hover,
+.customer-profile-summary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.8rem 1.8rem rgba(24, 50, 75, 0.1);
+}
+
+/* Rotate the customer profile caret while its menu is open. */
+.printwise-profile-button.dropdown-toggle::after {
+    transition: transform 0.18s ease;
+}
+
+.printwise-profile-button[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+/* Accessibility: remove non-essential movement when the user requests it. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

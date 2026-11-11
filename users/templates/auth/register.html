@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Create account | PrintWise{% endblock %}
-{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('customer_bp.static', filename='css/auth.css') }}">{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('static', filename='auth/auth.css') }}">{% endblock %}
 
 {% block content %}
 <section class="auth-layout">
@@ -35,4 +35,4 @@
 {% block footer %}{% endblock %}
 {% endblock %}
 
-{% block scripts %}<script src="{{ url_for('customer_bp.static', filename='js/register.js') }}"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='auth/register.js') }}"></script>{% endblock %}

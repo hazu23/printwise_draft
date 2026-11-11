@@ -1,0 +1,51 @@
+/* Shared printshop profile styles for staff viewing and admin editing. */
+.shop-profile-page { max-width: 1180px; margin: 0 auto; padding: .75rem 0 2rem; }
+.shop-profile-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.shop-profile-heading h1 { margin: 0; color: var(--ink-navy); font-size: clamp(1.9rem, 4vw, 2.5rem); font-weight: 800; }
+.shop-profile-heading > div > p:last-child { margin: .45rem 0 0; color: var(--slate); }
+.shop-profile-eyebrow, .shop-profile-preview-label { margin: 0 0 .45rem; color: var(--print-blue); font-size: .75rem; font-weight: 750; letter-spacing: .08em; }
+.shop-profile-readonly { padding: .4rem .75rem; border-radius: 999px; background: #eef2f7; color: var(--slate); font-size: .8rem; font-weight: 700; }
+.shop-profile-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, .85fr); gap: 1.5rem; align-items: start; }
+.shop-profile-preview, .shop-profile-form, .shop-profile-empty { padding: 1.5rem; border: 1px solid #dfe6ef; border-radius: 1rem; background: var(--paper-white); box-shadow: 0 .5rem 1.5rem #18324b0a; }
+.shop-profile-card-header { display: flex; align-items: center; gap: 1rem; padding-bottom: 1.25rem; }
+.shop-profile-card-header h2, .shop-profile-form h2 { margin: 0; color: var(--ink-navy); font-size: 1.3rem; font-weight: 750; }
+.shop-profile-card-header p, .shop-profile-form > div > p:last-child { margin: .25rem 0 0; color: var(--slate); }
+.shop-profile-logo, .shop-profile-initial { width: 64px; height: 64px; border-radius: .9rem; object-fit: cover; }
+.shop-profile-initial { display: grid; place-items: center; background: #eaf0ff; color: var(--print-blue); font-size: 1.3rem; font-weight: 750; }
+.shop-profile-section { padding: 1.15rem 0; border-top: 1px solid #e6ebf2; }
+.shop-profile-section h3, .shop-payment-settings h3 { margin: 0 0 .65rem; color: var(--ink-navy); font-size: .95rem; font-weight: 750; }
+.shop-profile-section p { margin: 0; color: var(--slate); }
+.shop-profile-section ul { margin: 0; padding-left: 1.25rem; columns: 2; }
+.shop-profile-section li { margin-bottom: .35rem; }
+.shop-profile-section dl { margin: 0; }
+.shop-profile-section dl div { display: grid; grid-template-columns: 90px 1fr; gap: .75rem; margin-bottom: .55rem; }
+.shop-profile-section dt { color: var(--slate); font-size: .82rem; }
+.shop-profile-section dd { margin: 0; overflow-wrap: anywhere; }
+.shop-profile-qr-name { margin-bottom: .65rem !important; color: var(--ink-navy) !important; font-weight: 700; }
+.shop-profile-payment-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.shop-profile-payment-option { min-width: 0; padding: 1rem; border: 1px solid #e1e7ef; border-radius: .75rem; }
+.shop-profile-payment-option > p:not(.shop-profile-qr-name) { margin: 0 0 .35rem; font-size: .8rem; overflow-wrap: anywhere; }
+.shop-profile-qr { display: block; width: min(230px, 100%); aspect-ratio: 1; border: 1px solid #e0e6ed; border-radius: .8rem; object-fit: contain; }
+.shop-profile-view-qr { margin-top: .75rem; }
+.shop-profile-form { display: grid; gap: 1rem; }
+.shop-profile-form label { display: grid; gap: .4rem; color: var(--ink-navy); font-size: .84rem; font-weight: 700; }
+.shop-profile-form label span { color: var(--slate); font-size: .75rem; font-weight: 500; }
+.shop-profile-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+.shop-profile-picture-setting { display: grid; gap: .65rem; }
+.shop-profile-picture-actions { display: flex; flex-wrap: wrap; gap: .55rem; }
+.shop-payment-settings { display: grid; gap: .85rem; margin-top: .35rem; padding: 1.1rem; border: 1px solid #dce5f0; border-radius: .8rem; background: #f8faff; }
+.shop-payment-settings > p { margin: -.35rem 0 0; color: var(--slate); font-size: .83rem; }
+.shop-payment-settings h4 { margin: .35rem 0 0; color: var(--ink-navy); font-size: .88rem; font-weight: 750; }
+.shop-payment-settings h4 span { color: var(--slate); font-size: .75rem; font-weight: 500; }
+.shop-payment-divider { height: 1px; margin: .35rem 0; background: #dce5f0; }
+.shop-payment-current { display: flex; align-items: center; gap: 1rem; color: var(--slate); font-size: .8rem; font-weight: 650; }
+.shop-payment-current img { width: 96px; height: 96px; border: 1px solid #dfe6ef; border-radius: .6rem; background: white; object-fit: contain; }
+.shop-payment-current-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.shop-payment-clear-button { justify-self: start; }
+.shop-image-modal-content { overflow: hidden; border-radius: 1rem; }
+.shop-image-modal-content .modal-body { display: grid; place-items: center; padding: 1.5rem; background: #f4f6f9; }
+.shop-image-modal-content .modal-body img { display: block; max-width: 100%; max-height: 72vh; border-radius: .75rem; object-fit: contain; }
+.shop-image-modal-content .modal-body .shop-qr-modal-image { width: min(440px, 100%); aspect-ratio: 1; background: white; }
+.shop-profile-empty { text-align: center; }
+@media (max-width: 900px) { .shop-profile-layout { grid-template-columns: 1fr; } }
+@media (max-width: 575px) { .shop-profile-heading { align-items: flex-start; flex-direction: column; } .shop-profile-form-grid, .shop-profile-payment-options { grid-template-columns: 1fr; } .shop-profile-section ul { columns: 1; } }

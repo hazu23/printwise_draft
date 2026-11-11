@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from . import db
 
 # main table.
@@ -59,6 +61,8 @@ class Customer(db.Model):
     account_id = db.Column(
         db.Integer, db.ForeignKey("accounts.id"), primary_key=True
     )
+    phone_number = db.Column(db.String(30), nullable=True)
+    profile_picture_path = db.Column(db.String(255), nullable=True)
 
     # gives the whole account row, so you dont have to look it up yourself.
     account = db.relationship("Account", back_populates="customer")
@@ -88,6 +92,20 @@ class PrintShop(db.Model):
     contact_email = db.Column(db.String(255), nullable=True)
     website = db.Column(db.String(255), nullable=True)
     business_hours = db.Column(db.String(255), nullable=True)
+    # One payment QR is configured per printshop. The name tells customers
+    # which app or payment service to use, such as GCash, Maya, or QR Ph.
+    payment_qr_name = db.Column(db.String(50), nullable=True)
+    payment_qr_path = db.Column(db.String(255), nullable=True)
+    payment_account_name = db.Column(db.String(100), nullable=True)
+    payment_account_number = db.Column(db.String(30), nullable=True)
+    # A printshop may offer one additional QR payment option.
+    payment_qr_2_name = db.Column(db.String(50), nullable=True)
+    payment_qr_2_path = db.Column(db.String(255), nullable=True)
+    payment_qr_2_account_name = db.Column(db.String(100), nullable=True)
+    payment_qr_2_account_number = db.Column(db.String(30), nullable=True)
+    # Kept temporarily so older databases can be migrated without losing files.
+    gcash_qr_path = db.Column(db.String(255), nullable=True)
+    maya_qr_path = db.Column(db.String(255), nullable=True)
 
     admin_account_id = db.Column(
         db.Integer, db.ForeignKey("admin.account_id"), nullable=True
@@ -104,6 +122,27 @@ class PrintShop(db.Model):
             (service for service in self.offerings if service.is_active),
             key=lambda service: service.name.lower(),
         )
+
+    def payment_options(self):
+        """Return each completely configured QR payment option."""
+        options = []
+        if self.payment_qr_name and self.payment_qr_path:
+            options.append({
+                "slot": "primary",
+                "name": self.payment_qr_name,
+                "path": self.payment_qr_path,
+                "account_name": self.payment_account_name,
+                "account_number": self.payment_account_number,
+            })
+        if self.payment_qr_2_name and self.payment_qr_2_path:
+            options.append({
+                "slot": "secondary",
+                "name": self.payment_qr_2_name,
+                "path": self.payment_qr_2_path,
+                "account_name": self.payment_qr_2_account_name,
+                "account_number": self.payment_qr_2_account_number,
+            })
+        return options
 
 
 class PrintShopServices(db.Model):
@@ -132,8 +171,12 @@ class PrintRequest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     customer_account_id = db.Column(
-        db.Integer, db.ForeignKey("accounts.id"), nullable=False
+        db.Integer, db.ForeignKey("accounts.id"), nullable=True
     )
+    # Walk-in customers may not have a PrintWise account. Their name and
+    # optional contact are saved directly on the request instead.
+    walk_in_customer_name = db.Column(db.String(100), nullable=True)
+    walk_in_customer_contact = db.Column(db.String(255), nullable=True)
     printshop_id = db.Column(
         db.Integer, db.ForeignKey("printshops.id"), nullable=False
     )
@@ -145,6 +188,13 @@ class PrintRequest(db.Model):
     file_paths = db.Column(db.JSON, nullable=False, default=list)
     notes = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default="pending")
+    # Staff or admins set this after checking the files and print options.
+    # It remains empty until the printshop decides the final price.
+    price = db.Column(db.Numeric(10, 2), nullable=True)
+    payment_status = db.Column(db.String(20), nullable=False, default="unpaid")
+    payment_method = db.Column(db.String(50), nullable=True)
+    payment_receipt_path = db.Column(db.String(255), nullable=True)
+    payment_submitted_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
 
     customer = db.relationship("Account")
@@ -153,7 +203,11 @@ class PrintRequest(db.Model):
 
     # These values are the only request statuses the system accepts.
     ALLOWED_STATUSES = {
-        "pending", "accepted", "in_progress", "ready", "completed", "declined"
+        "pending", "accepted", "in_progress", "ready", "completed", "declined",
+        "cancelled",
+    }
+    ALLOWED_PAYMENT_STATUSES = {
+        "unpaid", "for_verification", "partially_paid", "paid"
     }
 
     def belongs_to_customer(self, account_id):
@@ -170,6 +224,43 @@ class PrintRequest(db.Model):
         if clean_status not in self.ALLOWED_STATUSES:
             return False
         self.status = clean_status
+        return True
+
+    def cancel_by_customer(self):
+        """Cancel only before the printshop starts printing the request."""
+        if self.status not in {"pending", "accepted"}:
+            return False
+        self.status = "cancelled"
+        return True
+
+    def set_price(self, new_price):
+        """Save a valid peso amount and return True when it succeeds."""
+        try:
+            amount = Decimal(str(new_price).strip())
+            if amount < Decimal("0.01") or amount > Decimal("99999999.99"):
+                return False
+            self.price = amount.quantize(Decimal("0.01"))
+        except (InvalidOperation, TypeError, ValueError):
+            return False
+        return True
+
+    def change_payment_status(self, new_status):
+        """Change payment status only when the supplied value is allowed."""
+        clean_status = (new_status or "").strip().lower()
+        if clean_status not in self.ALLOWED_PAYMENT_STATUSES:
+            return False
+        self.payment_status = clean_status
+        return True
+
+    def submit_payment_receipt(self, payment_method, receipt_path):
+        """Save a customer's QR payment receipt for staff verification."""
+        clean_method = (payment_method or "").strip()
+        if not clean_method or len(clean_method) > 50 or not receipt_path:
+            return False
+        self.payment_method = clean_method
+        self.payment_receipt_path = receipt_path
+        self.payment_status = "for_verification"
+        self.payment_submitted_at = db.func.now()
         return True
 
     def uploaded_file_paths(self):

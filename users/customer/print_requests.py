@@ -11,10 +11,21 @@ from users.models import PrintRequest, PrintShop
 request_bp = Blueprint('request_bp', __name__, template_folder='templates')
 
 ALLOWED_PRINT_FILE_EXTENSIONS = {'.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'}
+ALLOWED_RECEIPT_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
 REQUEST_HIDDEN_SERVICE_NAMES = {
     'photocopy', 'photocopy/xerox', 'print/xerox', 'lamination', 'laminate',
     'photo develop', 'photo frame', 'sintra board', 'co2 laser cutting',
 }
+
+
+def _require_customer():
+    """Redirect logged-out visitors and reject signed-in non-customers."""
+    if not session.get('user_id'):
+        flash('Please log in as a customer to continue.', 'error')
+        return redirect(url_for('auth.login'))
+    if session.get('user_role') != 'customer':
+        abort(403)
+    return None
 
 
 def _request_options_for(service):
@@ -136,9 +147,9 @@ def _request_options_for(service):
 @request_bp.route('/printshops/<int:shop_id>/request', methods=('GET', 'POST'))
 def new_print_request(shop_id):
     # Only logged-in customers can send print requests.
-    if session.get('user_role') != 'customer':
-        flash('Please log in as a customer to request a print.', 'error')
-        return redirect(url_for('auth.login'))
+    login_redirect = _require_customer()
+    if login_redirect:
+        return login_redirect
 
     shop = PrintShop.query.get_or_404(shop_id)
     all_services = shop.active_services()
@@ -263,9 +274,9 @@ def new_print_request(shop_id):
 @request_bp.route('/requests/<int:request_id>/confirmation')
 def request_confirmation(request_id):
     # Customers can only view the confirmation for their own request.
-    if session.get('user_role') != 'customer':
-        flash('Please log in to view your request.', 'error')
-        return redirect(url_for('auth.login'))
+    login_redirect = _require_customer()
+    if login_redirect:
+        return login_redirect
 
     print_request = PrintRequest.query.get_or_404(request_id)
     if not print_request.belongs_to_customer(session['user_id']):
@@ -273,14 +284,140 @@ def request_confirmation(request_id):
     return render_template('request_submitted.html', print_request=print_request)
 
 
+@request_bp.route('/myrequests/<int:request_id>/cancel', methods=('POST',))
+def cancel_print_request(request_id):
+    """Let a customer cancel their own request before printing starts."""
+    login_redirect = _require_customer()
+    if login_redirect:
+        return login_redirect
+
+    print_request = PrintRequest.query.get_or_404(request_id)
+    if not print_request.belongs_to_customer(session['user_id']):
+        abort(404)
+
+    if not print_request.cancel_by_customer():
+        flash('This request can no longer be cancelled because printing has started.', 'error')
+        return redirect(url_for('customer_bp.dashboard'))
+
+    db.session.commit()
+    flash('Print request cancelled.', 'success')
+    return redirect(url_for('customer_bp.dashboard'))
+
+
+@request_bp.route('/myrequests/<int:request_id>/pay', methods=('GET', 'POST'))
+def pay_for_request(request_id):
+    """Show the shop's payment QR and accept a receipt screenshot."""
+    login_redirect = _require_customer()
+    if login_redirect:
+        return login_redirect
+
+    print_request = PrintRequest.query.get_or_404(request_id)
+    if not print_request.belongs_to_customer(session['user_id']):
+        abort(404)
+    if print_request.price is None:
+        flash('The printshop must set a price before online payment is available.', 'error')
+        return redirect(url_for('customer_bp.dashboard'))
+    if print_request.status in {'cancelled', 'declined'}:
+        flash('This request cannot be paid online.', 'error')
+        return redirect(url_for('customer_bp.dashboard'))
+    if print_request.payment_status == 'paid':
+        flash('This request is already marked as paid.', 'success')
+        return redirect(url_for('customer_bp.dashboard'))
+
+    payment_options = print_request.printshop.payment_options()
+    payment_qr_available = bool(payment_options)
+
+    def show_payment_page():
+        return render_template(
+            'payment.html',
+            print_request=print_request,
+            payment_options=payment_options,
+            payment_qr_available=payment_qr_available,
+        )
+
+    if request.method == 'GET':
+        return show_payment_page()
+
+    if not payment_options:
+        flash('That payment QR is not configured for this printshop.', 'error')
+        return show_payment_page()
+    # Customers may use any QR displayed on the page, so no selector is needed.
+    # Save the exact service name when there is one option, or a general label
+    # when the printshop provides multiple QR choices.
+    payment_method = (
+        payment_options[0]['name']
+        if len(payment_options) == 1
+        else 'Online QR payment'
+    )
+
+    receipt = request.files.get('receipt')
+    if receipt is None or not receipt.filename:
+        flash('Upload a screenshot of your payment receipt.', 'error')
+        return show_payment_page()
+
+    safe_filename = secure_filename(receipt.filename)
+    extension = os.path.splitext(safe_filename)[1].lower()
+    if extension not in ALLOWED_RECEIPT_EXTENSIONS:
+        flash('The receipt must be a JPG or PNG image.', 'error')
+        return show_payment_page()
+
+    receipt_folder = os.path.join(current_app.instance_path, 'payment_receipts')
+    os.makedirs(receipt_folder, exist_ok=True)
+    stored_filename = f'{uuid.uuid4().hex}_{safe_filename}'
+    receipt.save(os.path.join(receipt_folder, stored_filename))
+    stored_path = f'payment_receipts/{stored_filename}'
+
+    if not print_request.submit_payment_receipt(payment_method, stored_path):
+        flash('The payment information could not be saved.', 'error')
+        return show_payment_page()
+
+    db.session.commit()
+    flash('Receipt submitted. The printshop will verify your payment.', 'success')
+    return redirect(url_for('customer_bp.dashboard'))
+
+
+@request_bp.route('/printshops/<int:shop_id>/payment-qr/<slot>')
+def view_printshop_payment_qr(shop_id, slot):
+    """Show a printshop's configured payment QR to signed-in customers."""
+    login_redirect = _require_customer()
+    if login_redirect:
+        return login_redirect
+    shop = PrintShop.query.get_or_404(shop_id)
+    option = next(
+        (item for item in shop.payment_options() if item['slot'] == slot),
+        None,
+    )
+    qr_path = option['path'] if option else None
+    if not qr_path:
+        abort(404)
+    filename = os.path.basename(qr_path.replace('\\', '/'))
+    qr_folder = os.path.join(current_app.instance_path, 'payment_qr_codes')
+    return send_from_directory(qr_folder, filename, as_attachment=False)
+
+
+@request_bp.route('/myrequests/<int:request_id>/payment-receipt')
+def view_payment_receipt(request_id):
+    """Let a customer view the receipt attached to their own request."""
+    login_redirect = _require_customer()
+    if login_redirect:
+        return login_redirect
+    print_request = PrintRequest.query.get_or_404(request_id)
+    if not print_request.belongs_to_customer(session['user_id']):
+        abort(404)
+    if not print_request.payment_receipt_path:
+        abort(404)
+
+    filename = os.path.basename(print_request.payment_receipt_path.replace('\\', '/'))
+    receipt_folder = os.path.join(current_app.instance_path, 'payment_receipts')
+    return send_from_directory(receipt_folder, filename, as_attachment=False)
+
+
 @request_bp.route('/myrequests/<int:request_id>/files/<int:file_index>')
 def view_uploaded_file(request_id, file_index):
     # Customers can only open files attached to their own print requests.
-    if 'user_id' not in session:
-        flash('Please log in to view your uploaded file.', 'error')
-        return redirect(url_for('auth.login'))
-    if session.get('user_role') != 'customer':
-        abort(403)
+    login_redirect = _require_customer()
+    if login_redirect:
+        return login_redirect
 
     print_request = PrintRequest.query.get_or_404(request_id)
     if not print_request.belongs_to_customer(session['user_id']):

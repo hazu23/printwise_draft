@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Update' if is_editing else 'Create' }} Print Request | PrintWise{% endblock %}
+
+{% block content %}
+<section class="print-request-page" aria-labelledby="walk-in-request-heading">
+    <a class="request-back-link" href="{{ url_for('shop_requests.inbox') }}">← Back to requests</a>
+
+    <header class="request-page-heading">
+        <p class="home-label">{{ shop.name }}</p>
+        <h1 id="walk-in-request-heading">{{ 'Update' if is_editing else 'Create' }} a print request</h1>
+        <p class="text-secondary mb-0">
+            {% if is_editing %}Change the details of this print request.{% else %}Record a request received directly at the printshop.{% endif %}
+        </p>
+    </header>
+
+    {% set existing_name = print_request.walk_in_customer_name if is_editing else '' %}
+    {% set existing_contact = print_request.walk_in_customer_contact if is_editing else '' %}
+    {% set existing_quantity = print_request.quantity if is_editing else '1' %}
+    {% set existing_notes = print_request.notes if is_editing else '' %}
+    {% set existing_price = print_request.price if is_editing and print_request.price is not none else '' %}
+
+    <form class="request-form" method="post" enctype="multipart/form-data">
+        <div class="request-form-field">
+            <label for="walk-in-customer-name">Customer name <span class="request-optional">(optional)</span></label>
+            <input id="walk-in-customer-name" name="customer_name" class="form-control" type="text"
+                   maxlength="100" value="{{ request.form.get('customer_name', existing_name or '') }}">
+        </div>
+
+        <div class="request-form-field">
+            <label for="walk-in-customer-contact">Customer contact <span class="request-optional">(optional)</span></label>
+            <input id="walk-in-customer-contact" name="customer_contact" class="form-control" type="text"
+                   maxlength="255" placeholder="Email address or phone number"
+                   value="{{ request.form.get('customer_contact', existing_contact or '') }}">
+        </div>
+
+        <div class="request-form-field">
+            <label for="request-service">Service</label>
+            <select id="request-service" name="service_id" class="form-select" required>
+                <option value="">Choose a service</option>
+                {% for service in services %}
+                    <option value="{{ service.id }}" {% if selected_service_id == service.id %}selected{% endif %}>
+                        {{ service.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <p id="request-service-description" class="request-service-description text-secondary" aria-live="polite"></p>
+        <div id="request-custom-options" class="request-custom-options"></div>
+
+        <div class="request-form-field">
+            <label for="request-quantity">Quantity</label>
+            <input id="request-quantity" name="quantity" class="form-control" type="number"
+                   min="1" step="1" required value="{{ request.form.get('quantity', existing_quantity) }}">
+        </div>
+
+        <div class="request-form-field">
+            <label for="request-files">Upload files <span class="request-optional">(optional)</span></label>
+            <input id="request-files" name="print_files" class="form-control" type="file"
+                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+            <small class="request-field-help">Add files only when this print request has digital documents.</small>
+            <div id="request-file-list" class="request-file-list" aria-live="polite"></div>
+            {% if existing_files %}
+                <div class="request-existing-files">
+                    <strong>Already attached</strong>
+                    {% for file in existing_files %}
+                        <a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.name }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="request-form-field">
+            <label for="request-notes">Additional instructions <span class="request-optional">(optional)</span></label>
+            <textarea id="request-notes" name="notes" class="form-control" rows="4" maxlength="4000"
+                      placeholder="Add any details about the print request.">{{ request.form.get('notes', existing_notes or '') }}</textarea>
+        </div>
+
+        <div class="request-form-field">
+            <label for="walk-in-price">Price <span class="request-optional">(optional)</span></label>
+            <div class="input-group">
+                <span class="input-group-text">₱</span>
+                <input id="walk-in-price" name="price" class="form-control" type="number"
+                       min="0.01" max="99999999.99" step="0.01" inputmode="decimal"
+                       placeholder="0.00" value="{{ request.form.get('price', existing_price) }}">
+            </div>
+        </div>
+
+        <div class="request-form-actions">
+            <a class="btn btn-outline-secondary" href="{{ url_for('shop_requests.inbox') }}">Cancel</a>
+            <button class="btn btn-primary" type="submit">{{ 'Save changes' if is_editing else 'Create print request' }}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="request-service-options" type="application/json">{{ service_options|tojson }}</script>
+<script id="request-selected-options" type="application/json">{{ selected_options|tojson }}</script>
+<script src="{{ url_for('customer_bp.static', filename='js/request_form.js') }}"></script>
+{% endblock %}

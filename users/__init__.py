@@ -1,4 +1,6 @@
-from flask import Flask
+from datetime import timedelta
+
+from flask import Flask, request, session
 from flask_sqlalchemy import SQLAlchemy
 import os
 import secrets
@@ -11,12 +13,51 @@ db = SQLAlchemy()
 # development connection string configured for this project.
 DATABASE_URL = "mysql+pymysql://printwise:printwise123@localhost/printwisedb"
 
+
+def _is_production():
+    """Return True when the app is intentionally running as production."""
+    environment = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'development'))
+    return environment.strip().lower() == 'production'
+
+
+def _load_secret_key(app, production):
+    """Use an environment secret in production and a stable local secret in development."""
+    environment_secret = os.environ.get('SECRET_KEY')
+    if environment_secret:
+        return environment_secret
+
+    if production:
+        raise RuntimeError('SECRET_KEY must be set in the production environment.')
+
+    # The instance folder is excluded from Git. Saving the development key here
+    # keeps local sessions valid when Flask is restarted without publishing it.
+    os.makedirs(app.instance_path, exist_ok=True)
+    secret_file = os.path.join(app.instance_path, 'development_secret_key.txt')
+    if os.path.exists(secret_file):
+        with open(secret_file, 'r', encoding='utf-8') as file:
+            return file.read().strip()
+
+    new_secret = secrets.token_hex(32)
+    with open(secret_file, 'w', encoding='utf-8') as file:
+        file.write(new_secret)
+    return new_secret
+
 def create_app():
     # Build and configure the Flask application. The secret key signs session
     # cookies so Flask can recognize a user's session between requests.
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = secrets.token_hex(32)
+    production = _is_production()
+    app.config['SECRET_KEY'] = _load_secret_key(app, production)
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", DATABASE_URL)
+    # Flask stores a signed session identifier in a cookie. These settings keep
+    # JavaScript from reading it, restrict cross-site sending, and expire it.
+    app.config['SESSION_COOKIE_NAME'] = 'printwise_session'
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    # Secure cookies require HTTPS, so enable this automatically in production.
+    app.config['SESSION_COOKIE_SECURE'] = production
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
+    app.config['SESSION_REFRESH_EACH_REQUEST'] = True
     # Limit uploaded request attachments to 16 MB.
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
@@ -30,6 +71,27 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+
+    @app.before_request
+    def refresh_signed_in_account():
+        """Reject deleted accounts and refresh role/name stored in the session."""
+        # Static CSS, JavaScript, and images do not need a database lookup.
+        if request.endpoint and request.endpoint.endswith('.static'):
+            return None
+        account_id = session.get('user_id')
+        if not account_id:
+            return None
+        account = models.Account.query.get(account_id)
+        if account is None:
+            session.clear()
+            return None
+        session['user_name'] = account.full_name
+        session['user_role'] = account.role
+        if account.is_customer() and account.customer:
+            session['user_profile_picture'] = account.customer.profile_picture_path
+        else:
+            session.pop('user_profile_picture', None)
+        return None
 
     # Import the route groups after the app and models are ready.
     from users.auth import auth

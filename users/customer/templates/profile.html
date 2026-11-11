@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('customer_bp.static', filename='css/profile.css') }}">{% endblock %}
+
+{% block content %}
+<section class="customer-profile-page" aria-labelledby="customer-profile-heading">
+    <a class="customer-profile-back" href="{{ url_for('customer_bp.dashboard') }}">← Back to my requests</a>
+
+    <div class="customer-profile-layout">
+        <aside class="customer-profile-summary">
+            {% if account.customer.profile_picture_path %}
+                <img class="customer-profile-avatar customer-profile-avatar-image"
+                     src="{{ url_for('customer_bp.static', filename=account.customer.profile_picture_path) }}"
+                     alt="{{ account.full_name }} profile picture">
+            {% else %}
+                <span class="customer-profile-avatar" aria-hidden="true">{{ account.full_name[:1]|upper }}</span>
+            {% endif %}
+            <h1 id="customer-profile-heading">{{ account.full_name }}</h1>
+            <p>{{ account.email }}</p>
+            {% if account.customer.phone_number %}<p>{{ account.customer.phone_number }}</p>{% endif %}
+            <span class="customer-profile-role">Customer account</span>
+            {% if account.customer.profile_picture_path %}
+            <div class="customer-profile-picture-actions">
+                <button class="btn btn-outline-secondary btn-sm" type="button"
+                        data-bs-toggle="modal" data-bs-target="#customer-profile-picture-modal">View Image</button>
+                <form method="post">
+                    <button class="btn btn-outline-danger btn-sm" type="submit"
+                            name="remove_profile_picture" value="1" formnovalidate
+                            onclick="return confirm('Remove your profile picture?');">Remove picture</button>
+                </form>
+            </div>
+            {% endif %}
+        </aside>
+
+        <form class="customer-profile-form" method="post" enctype="multipart/form-data">
+            <div>
+                <p class="customer-profile-label">ACCOUNT SETTINGS</p>
+                <h2>Edit profile</h2>
+            </div>
+
+            <label for="profile-full-name">Full name</label>
+            <input id="profile-full-name" class="form-control" name="full_name" type="text"
+                   value="{{ request.form.get('full_name', account.full_name) }}" maxlength="50" autocomplete="name" required>
+
+            <label for="profile-email">Email address</label>
+            <input id="profile-email" class="form-control" name="email" type="email"
+                   value="{{ request.form.get('email', account.email) }}" maxlength="100" autocomplete="email" required>
+
+            <label for="profile-phone">Phone number <span>(Optional)</span></label>
+            <input id="profile-phone" class="form-control" name="phone_number" type="tel"
+                   value="{{ request.form.get('phone_number', account.customer.phone_number or '') }}"
+                   maxlength="30" autocomplete="tel" placeholder="Example: 0912 345 6789">
+
+            <label for="profile-picture">Profile picture <span>(Optional)</span></label>
+            <input id="profile-picture" class="form-control" name="profile_picture" type="file"
+                   accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+
+            <div class="customer-profile-actions">
+                <a class="btn btn-outline-secondary" href="{{ url_for('customer_bp.dashboard') }}">Cancel</a>
+                <button class="btn btn-primary" type="submit">Save changes</button>
+            </div>
+        </form>
+    </div>
+
+    {% if account.customer.profile_picture_path %}
+    <div class="modal fade" id="customer-profile-picture-modal" tabindex="-1"
+         aria-labelledby="customer-profile-picture-heading" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content customer-profile-picture-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="customer-profile-picture-heading">Profile picture</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img src="{{ url_for('customer_bp.static', filename=account.customer.profile_picture_path) }}"
+                         alt="{{ account.full_name }} profile picture">
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% block footer %}{% endblock %}
+{% endblock %}

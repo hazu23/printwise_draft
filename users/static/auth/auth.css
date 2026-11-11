@@ -1,4 +1,4 @@
-/* Shared page styling for the login and registration screens. */
+/* Authentication-only styles. Shared colors come from css/style.css. */
 body {
     background: var(--soft-gray);
     color: var(--ink-navy);

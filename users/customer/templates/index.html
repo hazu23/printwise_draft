@@ -32,7 +32,7 @@
             <ul class="lp-status-list">
                 <li class="lp-done">Request received</li>
                 <li class="lp-current">Printing now</li>
-                <li>Ready for pickup</li>
+                <li>Ready for pick up</li>
             </ul>
         </div>
         <div class="lp-pickup-card">
@@ -64,6 +64,63 @@
     </div>
 </section>
 
+<!-- FAQ: common questions for customers and printshop owners -->
+<section id="faq" class="lp-section lp-faq" aria-labelledby="faq-heading">
+    <p class="lp-label">FREQUENTLY ASKED QUESTIONS</p>
+    <h2 class="lp-heading" id="faq-heading">Questions about using PrintWise?</h2>
+
+    <div class="lp-faq-groups">
+        <section class="lp-faq-group" aria-labelledby="customer-faq-heading">
+            <div class="lp-faq-group-heading">
+                <span class="lp-faq-icon" aria-hidden="true">C</span>
+                <div><p class="lp-label">FOR CUSTOMERS</p><h3 id="customer-faq-heading">Sending and tracking requests</h3></div>
+            </div>
+
+            <details class="lp-faq-item">
+                <summary>How do I send a print request?</summary>
+                <div class="lp-faq-answer">
+                    <ol>
+                        <li>Create a customer account or log in to PrintWise.</li>
+                        <li>Open the <strong>Printshops</strong> page and choose the printshop you want.</li>
+                        <li>Open the shop details and press <strong>Request a print</strong>.</li>
+                        <li>Choose an available service, then complete the required options such as paper size, print color, finish, and quantity.</li>
+                        <li>Upload the files you want printed. You may add multiple files and include extra instructions when needed.</li>
+                        <li>Review the information and submit the request. The printshop will receive it and set the final price after reviewing the files and specifications.</li>
+                    </ol>
+                </div>
+            </details>
+
+            <details class="lp-faq-item">
+                <summary>Can I track my print request?</summary>
+                <div class="lp-faq-answer">
+                    <p>Yes. Open <strong>My Requests</strong> after logging in. You can see whether a request is pending, accepted, printing, ready for pickup, or completed. The page also shows the confirmed price and payment status. Click a request row to review its specifications and uploaded files.</p>
+                </div>
+            </details>
+
+            <details class="lp-faq-item">
+                <summary>How can I pay?</summary>
+                <div class="lp-faq-answer">
+                    <p>After the printshop confirms the price, you may pay online by opening the request, choosing <strong>Pay online</strong>, and scanning one of the printshop's available QR codes. Upload a clear screenshot of the payment receipt so the printshop can verify it. You may also pay directly at the physical printshop when you visit or collect your order.</p>
+                </div>
+            </details>
+        </section>
+
+        <section class="lp-faq-group" aria-labelledby="owner-faq-heading">
+            <div class="lp-faq-group-heading">
+                <span class="lp-faq-icon lp-faq-icon-owner" aria-hidden="true">P</span>
+                <div><p class="lp-label">FOR PRINTSHOP OWNERS</p><h3 id="owner-faq-heading">Joining PrintWise</h3></div>
+            </div>
+
+            <details class="lp-faq-item">
+                <summary>Can I add my printshop to the system?</summary>
+                <div class="lp-faq-answer">
+                    <p>Yes. Printshop owners can contact <a href="mailto:danhaidend@gmail.com">danhaidend@gmail.com</a> for more information about adding their shop, services, staff accounts, contact details, and payment options to PrintWise.</p>
+                </div>
+            </details>
+        </section>
+    </div>
+</section>
+
 <!-- FOR PRINTSHOPS: dark band at the bottom -->
 <section id="for-printshops" class="lp-band">
     <div class="lp-band-text">
@@ -71,8 +128,11 @@
         <h2>Keep orders, transactions and stock in order.</h2>
         <p>Receive requests with the files and specs already attached, update the status as you work, and keep your operations organized in one place.</p>
     </div>
-    <!-- Change the # to a contact page or email link later -->
-    <a class="btn btn-light btn-lg" href="#">Talk to us about joining</a>
+    <a class="btn btn-light btn-lg" href="mailto:danhaidend@gmail.com">Talk to us about joining</a>
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('customer_bp.static', filename='js/landing.js') }}"></script>
 {% endblock %}

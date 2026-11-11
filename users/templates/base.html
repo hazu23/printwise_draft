@@ -6,12 +6,13 @@
     <title>{% block title %}PrintWise{% endblock %}</title>
     <link rel="icon" type="image/png" href="{{ url_for('customer_bp.static', filename='images/printwise_logo_round.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('customer_bp.static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block stylesheets %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
     <nav class="navbar navbar-expand-lg pw-navbar sticky-top" data-bs-theme="dark">
-        <div class="container printwise-nav-container">
+        <!-- Use the full navbar width so the brand and account actions stay near the edges. -->
+        <div class="container-fluid printwise-nav-container">
             <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ url_for('customer_bp.index') }}">
                 <img src="{{ url_for('customer_bp.static', filename='images/printwise_logo_round.png') }}" alt="PrintWise logo" class="pw-nav-logo" height="34">
                 <span>PrintWise</span>
@@ -38,6 +39,11 @@
                            {% if request.blueprint == 'shop_requests' %}aria-current="page"{% endif %}>
                             Requests
                         </a>
+                        <a class="nav-link printshops-nav-link {% if request.endpoint in ('staff_bp.printshop_profile', 'admin_bp.printshop_profile') %}active{% endif %}"
+                           href="{{ url_for('admin_bp.printshop_profile') if session.get('user_role') == 'admin' else url_for('staff_bp.printshop_profile') }}"
+                           {% if request.endpoint in ('staff_bp.printshop_profile', 'admin_bp.printshop_profile') %}aria-current="page"{% endif %}>
+                            Printshop Profile
+                        </a>
                     {% endif %}
                 </div>
             {% else %}
@@ -50,16 +56,44 @@
             {% endif %}
             <div class="{% if session.get('user_id') %}ms-auto{% else %}ms-auto ms-lg-0{% endif %} d-flex align-items-center gap-3 printwise-nav-actions">
                 {% if session.get('user_id') %}
-                    <div class="printwise-profile">
-                        <span class="printwise-profile-avatar" aria-hidden="true">{{ (session.get('user_name') or 'User')[:1]|upper }}</span>
-                        <span class="printwise-profile-copy">
-                            <span class="printwise-profile-name">{{ session.get('user_name') }}</span>
-                            <span class="printwise-profile-role">{% if session.get('user_role') == 'admin' %}Admin{% elif session.get('user_role') == 'staff' %}Staff{% else %}Customer{% endif %}</span>
-                        </span>
+                    {% if session.get('user_role') == 'customer' %}
+                    <div class="dropdown printwise-profile-dropdown">
+                        <button class="printwise-profile printwise-profile-button dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open customer account menu">
+                            {% if session.get('user_profile_picture') %}
+                                <img class="printwise-profile-avatar printwise-profile-avatar-image"
+                                     src="{{ url_for('customer_bp.static', filename=session.get('user_profile_picture')) }}"
+                                     alt="">
+                            {% else %}
+                                <span class="printwise-profile-avatar" aria-hidden="true">{{ (session.get('user_name') or 'User')[:1]|upper }}</span>
+                            {% endif %}
+                            <span class="printwise-profile-copy">
+                                <span class="printwise-profile-name">{{ (session.get('user_name') or 'User').split()[0] }}</span>
+                                <span class="printwise-profile-role">Customer</span>
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end printwise-profile-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('customer_bp.profile') }}">Edit profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+                                    <button class="dropdown-item" type="submit">Log out</button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
-                    <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
-                        <button class="btn btn-outline-light btn-sm" type="submit">Log out</button>
-                    </form>
+                    {% else %}
+                        <div class="printwise-profile">
+                            <span class="printwise-profile-avatar" aria-hidden="true">{{ (session.get('user_name') or 'User')[:1]|upper }}</span>
+                            <span class="printwise-profile-copy">
+                                <span class="printwise-profile-name">{{ (session.get('user_name') or 'User').split()[0] }}</span>
+                                <span class="printwise-profile-role">{% if session.get('user_role') == 'admin' %}Admin{% else %}Staff{% endif %}</span>
+                            </span>
+                        </div>
+                        <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+                            <button class="btn btn-outline-light btn-sm" type="submit">Log out</button>
+                        </form>
+                    {% endif %}
                 {% else %}
                     <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.login') }}">Log in</a>
                     <a class="btn btn-light btn-sm" href="{{ url_for('auth.register') }}">Create account</a>

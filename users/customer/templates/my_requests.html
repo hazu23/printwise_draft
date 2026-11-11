@@ -8,11 +8,19 @@
     {% set status_labels = {
         'pending': 'Pending',
         'accepted': 'Accepted',
-        'in_progress': 'In progress',
-        'ready': 'Ready for pickup',
+        'in_progress': 'Printing',
+        'ready': 'Ready for pick up',
         'completed': 'Completed',
-        'declined': 'Declined'
+        'declined': 'Declined',
+        'cancelled': 'Cancelled'
     } %}
+    {% set payment_labels = {
+        'unpaid': 'Unpaid',
+        'for_verification': 'For verification',
+        'partially_paid': 'Partially paid',
+        'paid': 'Paid'
+    } %}
+
     <header class="customer-requests-heading">
         <div>
             <p class="requests-eyebrow">Your account</p>
@@ -26,20 +34,17 @@
         <a class="request-summary-card {% if selected_status == 'in_progress' %}is-selected{% endif %}"
            href="{{ url_for('customer_bp.dashboard', status='in_progress') }}"
            {% if selected_status == 'in_progress' %}aria-current="page"{% endif %}>
-            <span class="request-summary-number">{{ status_counts.in_progress }}</span>
-            <span>In progress</span>
+            <span class="request-summary-number">{{ status_counts.in_progress }}</span><span>Printing</span>
         </a>
         <a class="request-summary-card {% if selected_status == 'ready' %}is-selected{% endif %}"
            href="{{ url_for('customer_bp.dashboard', status='ready') }}"
            {% if selected_status == 'ready' %}aria-current="page"{% endif %}>
-            <span class="request-summary-number">{{ status_counts.ready }}</span>
-            <span>Ready for pickup</span>
+            <span class="request-summary-number">{{ status_counts.ready }}</span><span>Ready for pick up</span>
         </a>
         <a class="request-summary-card {% if selected_status == 'completed' %}is-selected{% endif %}"
            href="{{ url_for('customer_bp.dashboard', status='completed') }}"
            {% if selected_status == 'completed' %}aria-current="page"{% endif %}>
-            <span class="request-summary-number">{{ status_counts.completed }}</span>
-            <span>Completed</span>
+            <span class="request-summary-number">{{ status_counts.completed }}</span><span>Completed</span>
         </a>
     </nav>
 
@@ -54,56 +59,55 @@
     </div>
 
     {% if print_requests %}
-        <div class="customer-request-list">
-            {% for print_request in print_requests %}
-                <article class="customer-request-card">
-                    <div class="request-card-main">
-                        <div class="request-card-copy">
-                            <p class="request-shop-name">{{ print_request.printshop.name }}</p>
-                            <h3>{{ print_request.service.name }}</h3>
-                            <p class="request-meta">
-                                Submitted {{ print_request.created_at.strftime('%b %d, %Y') }}
-                                <span aria-hidden="true">·</span>
-                                {{ print_request.file_paths|length }} file{{ 's' if print_request.file_paths|length != 1 else '' }}
-                                <span aria-hidden="true">·</span>
-                                Quantity: {{ print_request.quantity }}
-                            </p>
-                        </div>
+        <section class="customer-request-panel" aria-label="My print requests">
+            <div class="customer-request-columns" aria-hidden="true">
+                <span>Printshop and service</span><span>Submitted</span><span>Status</span><span>Price</span><span>Payment</span><span>Actions</span>
+            </div>
+
+            <div class="customer-request-list">
+                {% for print_request in print_requests %}
+                    <article class="customer-request-row" data-request-id="{{ print_request.id }}" role="button" tabindex="0"
+                             aria-label="View request {{ print_request.id }} details">
+                        <span class="customer-request-main">
+                            <strong>{{ print_request.printshop.name }}</strong>
+                            <span>{{ print_request.service.name }}</span>
+                            <small>Request #{{ print_request.id }}</small>
+                        </span>
+
+                        <time class="customer-request-date">{{ print_request.created_at.strftime('%b %d, %Y') }}</time>
+
                         <span class="customer-request-status status-{{ print_request.status|replace('_', '-') }}">
                             {{ status_labels.get(print_request.status, print_request.status|title) }}
                         </span>
-                    </div>
 
-                    {% if print_request.selected_options %}
-                        <dl class="request-options">
-                            {% for option_name, option_value in print_request.selected_options.items() %}
-                                {% if option_value %}
-                                    <div>
-                                        <dt>{{ option_name|replace('_', ' ')|title }}</dt>
-                                        <dd>{{ option_value }}</dd>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </dl>
-                    {% endif %}
+                        <span class="request-price {% if print_request.price is none %}request-price-pending{% endif %}">
+                            {% if print_request.price is none %}Price not set{% else %}₱{{ "{:,.2f}".format(print_request.price) }}{% endif %}
+                        </span>
 
-                    <div class="request-card-footer">
-                        <span>Request #{{ print_request.id }}</span>
-                    </div>
+                        <span class="request-payment-status payment-{{ print_request.payment_status or 'unpaid' }}">
+                            {{ payment_labels.get(print_request.payment_status or 'unpaid', 'Unpaid') }}
+                        </span>
 
-                    {% if request_files[print_request.id] %}
-                        <div class="request-uploaded-files">
-                            <h4>Uploaded files</h4>
-                            <ul>
-                                {% for file in request_files[print_request.id] %}
-                                    <li><a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.name }}</a></li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    {% endif %}
-                </article>
-            {% endfor %}
-        </div>
+                        <span class="customer-request-actions">
+                            {% if print_request.price is not none
+                                  and print_request.payment_status != 'paid'
+                                  and print_request.status not in ('cancelled', 'declined') %}
+                                <a class="btn btn-primary btn-sm" href="{{ url_for('request_bp.pay_for_request', request_id=print_request.id) }}">Pay online</a>
+                            {% elif print_request.price is none %}
+                                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Pay online</button>
+                            {% endif %}
+
+                            {% if print_request.status in ('pending', 'accepted') %}
+                                <form method="post" action="{{ url_for('request_bp.cancel_print_request', request_id=print_request.id) }}"
+                                      onsubmit="return confirm('Cancel this print request?');">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Cancel request</button>
+                                </form>
+                            {% endif %}
+                        </span>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
     {% elif total_requests > 0 %}
         <div class="requests-empty-state">
             <h2>No matching requests</h2>
@@ -118,5 +122,51 @@
         </div>
     {% endif %}
 </section>
+
+<div class="modal fade" id="customer-request-modal" tabindex="-1" aria-labelledby="customer-request-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content customer-request-modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title fs-5" id="customer-request-modal-title">Request details</h2>
+                    <span id="customer-request-modal-shop" class="customer-modal-shop"></span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <section class="customer-modal-section" aria-labelledby="customer-modal-summary-heading">
+                    <h3 id="customer-modal-summary-heading">Request summary</h3>
+                    <dl class="customer-modal-summary">
+                        <div><dt>Request number</dt><dd id="customer-modal-request-id"></dd></div>
+                        <div><dt>Submitted</dt><dd id="customer-modal-submitted"></dd></div>
+                        <div><dt>Quantity</dt><dd id="customer-modal-quantity"></dd></div>
+                        <div><dt>Files uploaded</dt><dd id="customer-modal-file-count"></dd></div>
+                    </dl>
+                </section>
+
+                <section class="customer-modal-section" aria-labelledby="customer-modal-specs-heading">
+                    <h3 id="customer-modal-specs-heading">Specifications</h3>
+                    <dl id="customer-modal-options" class="customer-modal-options"></dl>
+                </section>
+
+                <section id="customer-modal-notes-section" class="customer-modal-section" aria-labelledby="customer-modal-notes-heading" hidden>
+                    <h3 id="customer-modal-notes-heading">Additional instructions</h3>
+                    <p id="customer-modal-notes"></p>
+                </section>
+
+                <section class="customer-modal-section" aria-labelledby="customer-modal-files-heading">
+                    <h3 id="customer-modal-files-heading">Uploaded files</h3>
+                    <div id="customer-modal-files" class="customer-modal-files"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="customer-request-data" type="application/json">{{ request_details|tojson }}</script>
 {% block footer %}{% endblock %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('customer_bp.static', filename='js/my_requests.js') }}"></script>
 {% endblock %}

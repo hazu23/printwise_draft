@@ -21,6 +21,57 @@
     letter-spacing: -0.04em;
 }
 
+.request-heading-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.65rem;
+}
+
+.qr-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.qr-settings-card {
+    display: grid;
+    gap: 0.7rem;
+    padding: 1rem;
+    border: 1px solid #dfe6ef;
+    border-radius: 0.85rem;
+    background: #fafbfc;
+}
+
+.qr-settings-card h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.qr-settings-card img,
+.qr-empty-state {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 1px solid #dfe6ef;
+    border-radius: 0.7rem;
+    background: white;
+    object-fit: contain;
+}
+
+.qr-empty-state {
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    color: var(--slate);
+    text-align: center;
+}
+
+.qr-configured-label {
+    color: #20734d;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
 .request-inbox-panel,
 .request-inbox-empty {
     overflow: hidden;
@@ -81,7 +132,7 @@
 
 .request-inbox-column-labels {
     display: grid;
-    grid-template-columns: minmax(260px, 1.7fr) minmax(150px, 1fr) auto auto;
+    grid-template-columns: minmax(220px, 1.6fr) minmax(125px, 0.9fr) 110px 100px 120px 50px;
     gap: 1rem;
     padding: 0.7rem 1.4rem;
     background: #fafbfc;
@@ -95,7 +146,7 @@
 .request-inbox-row {
     display: grid;
     width: 100%;
-    grid-template-columns: minmax(260px, 1.7fr) minmax(150px, 1fr) auto auto;
+    grid-template-columns: minmax(220px, 1.6fr) minmax(125px, 0.9fr) 110px 100px 120px 50px;
     align-items: center;
     gap: 1rem;
     padding: 1rem 1.4rem;
@@ -152,6 +203,7 @@
 .request-row-copy > span,
 .request-row-copy small,
 .request-row-date,
+.request-row-price,
 .request-row-files {
     color: var(--slate);
     font-size: 0.76rem;
@@ -167,6 +219,48 @@
 
 .request-row-files {
     white-space: nowrap;
+}
+
+.request-row-price {
+    color: var(--ink-navy);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.request-row-price.is-unset {
+    color: var(--slate);
+    font-weight: 600;
+}
+
+.request-payment-badge {
+    display: inline-flex;
+    align-items: center;
+    width: max-content;
+    padding: 0.3rem 0.62rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.request-payment-badge.payment-unpaid {
+    background: #fff0f0;
+    color: #a33a3a;
+}
+
+.request-payment-badge.payment-for_verification {
+    background: #eaf0ff;
+    color: #315fe8;
+}
+
+.request-payment-badge.payment-partially_paid {
+    background: #fff4dc;
+    color: #805500;
+}
+
+.request-payment-badge.payment-paid {
+    background: #e6f7ef;
+    color: #20734d;
 }
 
 .request-status-badge {
@@ -240,6 +334,14 @@
     font-weight: 700;
 }
 
+/* One form wraps the modal so a single button saves every editable field. */
+.request-update-form-shell {
+    display: flex;
+    min-height: 0;
+    max-height: inherit;
+    flex-direction: column;
+}
+
 .request-modal-id {
     color: var(--slate);
     font-size: 0.75rem;
@@ -304,6 +406,32 @@
     white-space: pre-wrap;
 }
 
+.request-modal-price-current {
+    margin: 0 0 0.65rem;
+    color: var(--ink-navy);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.request-price-form {
+    display: flex;
+    align-items: end;
+    gap: 0.55rem;
+}
+
+.request-price-form label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.request-price-form .input-group {
+    max-width: 230px;
+}
+
 .request-modal-files {
     display: flex;
     flex-wrap: wrap;
@@ -325,30 +453,69 @@
 
 .request-modal-footer {
     display: flex;
-    align-items: end;
-    justify-content: space-between;
+    align-items: stretch;
+    flex-direction: column;
     gap: 1rem;
     padding: 1rem 1.35rem;
     border-top: 1px solid #e7ebf1;
+    background: #f8fafc;
 }
 
-.request-status-form {
+.request-update-forms {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.request-update-form {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.request-update-form label {
+    color: var(--ink-navy);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.request-update-controls {
     display: flex;
-    align-items: end;
     gap: 0.55rem;
 }
 
-.request-status-form label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
+.request-update-controls .form-select {
+    min-width: 0;
 }
 
-.request-status-form select {
-    min-width: 145px;
+.request-save-button {
+    flex: 0 0 auto;
+    min-width: 120px;
+    border: 1px solid #2858c4;
+    border-radius: 0.55rem;
+    background: var(--print-blue);
+    color: white;
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: 0 0.25rem 0.65rem rgba(53, 106, 230, 0.2);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.request-save-button:hover,
+.request-save-button:focus-visible {
+    border-color: #234dcc;
+    background: #2858c4;
+    color: white;
+    box-shadow: 0 0.35rem 0.85rem rgba(53, 106, 230, 0.28);
+    transform: translateY(-1px);
+}
+
+.request-secondary-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
 }
 
 .request-decision-actions {
@@ -356,7 +523,24 @@
     gap: 0.5rem;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 991.98px) {
+    .request-inbox-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .request-inbox-heading .btn {
+        width: 100%;
+    }
+
+    .request-heading-actions {
+        flex-direction: column;
+    }
+
+    .qr-settings-grid {
+        grid-template-columns: 1fr;
+    }
+
     .request-inbox-column-labels {
         display: none;
     }
@@ -368,38 +552,65 @@
     }
 
     .request-row-customer {
-        grid-column: 1;
-        grid-row: 1 / span 2;
+        grid-column: 1 / -1;
+        grid-row: 1;
     }
 
     .request-row-date {
         grid-column: 1;
-        padding-left: 3.1rem;
-    }
-
-    .request-inbox-row > .request-status-badge,
-    .request-row-files {
-        grid-column: 2;
-        justify-self: end;
-    }
-
-    .request-inbox-row > .request-status-badge {
-        grid-row: 1;
-    }
-
-    .request-row-files {
         grid-row: 2;
     }
 
+    .request-inbox-row > .request-status-badge {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: end;
+    }
+
+    .request-row-price {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    .request-payment-badge {
+        grid-column: 2;
+        grid-row: 3;
+        justify-self: end;
+    }
+
+    .request-row-files {
+        grid-column: 1;
+        grid-row: 4;
+    }
+
+    .request-update-forms {
+        grid-template-columns: 1fr;
+    }
+
     .request-modal-footer,
-    .request-status-form {
+    .request-price-form {
         align-items: stretch;
         flex-direction: column;
     }
 
-    .request-status-form select,
-    .request-status-form button {
+    .request-price-form .input-group {
+        max-width: none;
+    }
+
+    .request-update-controls {
+        flex-direction: column;
+    }
+
+    .request-update-controls select,
+    .request-update-controls button,
+    .request-secondary-actions,
+    .request-secondary-actions > .btn {
         width: 100%;
+    }
+
+    .request-secondary-actions {
+        align-items: stretch;
+        flex-direction: column;
     }
 
     .request-decision-actions > button {
