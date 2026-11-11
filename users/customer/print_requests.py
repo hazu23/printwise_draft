@@ -1,11 +1,16 @@
 import os
 import uuid
+from copy import deepcopy
+from zipfile import BadZipFile, ZipFile
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.utils import secure_filename
 
 from users import db
 from users.models import PrintRequest, PrintShop
+from users.notifications import notify_printshop_workers
+from users.file_cleanup import cleanup_request_files
+from users.shop_helpers import is_valid_image_upload, save_image
 
 # This blueprint contains the print request form and confirmation page.
 request_bp = Blueprint('request_bp', __name__, template_folder='templates')
@@ -16,6 +21,34 @@ REQUEST_HIDDEN_SERVICE_NAMES = {
     'photocopy', 'photocopy/xerox', 'print/xerox', 'lamination', 'laminate',
     'photo develop', 'photo frame', 'sintra board', 'co2 laser cutting',
 }
+
+
+def is_valid_print_upload(upload, extension):
+    """Check file bytes so renamed executables are rejected as print files."""
+    position = upload.stream.tell()
+    header = upload.stream.read(12)
+    upload.stream.seek(position)
+    if extension == '.pdf':
+        return header.startswith(b'%PDF-')
+    if extension == '.doc':
+        return header.startswith(b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1')
+    if extension == '.png':
+        return header.startswith(b'\x89PNG\r\n\x1a\n')
+    if extension in {'.jpg', '.jpeg'}:
+        return header.startswith(b'\xff\xd8\xff')
+    if extension == '.docx':
+        try:
+            with ZipFile(upload.stream) as archive:
+                names = set(archive.namelist())
+                valid = '[Content_Types].xml' in names and any(
+                    name.startswith('word/') for name in names
+                )
+        except (BadZipFile, OSError):
+            valid = False
+        finally:
+            upload.stream.seek(position)
+        return valid
+    return False
 
 
 def _require_customer():
@@ -32,6 +65,24 @@ def _request_options_for(service):
     """Build the choices shown for the selected print service."""
     service_name = service.name.strip().lower()
     service_description = service.description or ''
+    saved_options = service.options if isinstance(service.options, dict) else {}
+
+    def enabled_options(option_config):
+        """Hide choices an admin disabled while preserving their saved data."""
+        cleaned = deepcopy(option_config)
+        for field in cleaned.get('fields', []):
+            choices = field.get('choices')
+            if isinstance(choices, list):
+                field['choices'] = [
+                    choice for choice in choices
+                    if not isinstance(choice, dict) or choice.get('enabled', True)
+                ]
+        return cleaned
+
+    # Once an admin saves service options, those database choices replace the
+    # starter defaults below for this printshop only.
+    if saved_options.get('managed_options') and saved_options.get('fields'):
+        return enabled_options(saved_options)
 
     if service_name == 'sticker paper printing':
         return {
@@ -128,9 +179,8 @@ def _request_options_for(service):
             ],
         }
 
-    options = service.options if isinstance(service.options, dict) else {}
-    if options.get('fields'):
-        return options
+    if saved_options.get('fields'):
+        return enabled_options(saved_options)
 
     return {
         'description': service_description or 'Tell the printshop the options or specifications you need.',
@@ -241,7 +291,7 @@ def new_print_request(shop_id):
     for uploaded_file in uploaded_files:
         safe_filename = secure_filename(uploaded_file.filename)
         extension = os.path.splitext(safe_filename)[1].lower()
-        if extension not in ALLOWED_PRINT_FILE_EXTENSIONS:
+        if extension not in ALLOWED_PRINT_FILE_EXTENSIONS or not is_valid_print_upload(uploaded_file, extension):
             flash('Each attachment must be a PDF, Word document, JPG, or PNG file.', 'error')
             return show_form()
         safe_files.append((uploaded_file, safe_filename))
@@ -266,6 +316,15 @@ def new_print_request(shop_id):
         notes=notes or None,
     )
     db.session.add(print_request)
+    db.session.flush()
+    print_request.assign_request_reference()
+    notify_printshop_workers(
+        shop.id,
+        'New print request',
+        f'{print_request.request_reference} was submitted by {session.get("user_name", "a customer")}.',
+        url_for('shop_requests.inbox'),
+        'new_request',
+    )
     db.session.commit()
 
     return redirect(url_for('request_bp.request_confirmation', request_id=print_request.id))
@@ -299,6 +358,13 @@ def cancel_print_request(request_id):
         flash('This request can no longer be cancelled because printing has started.', 'error')
         return redirect(url_for('customer_bp.dashboard'))
 
+    # A cancelled request no longer needs private customer documents. The
+    # helper refuses to touch anything outside the two expected upload folders.
+    # Keep a submitted payment receipt temporarily as a financial record. The
+    # old-file maintenance command removes it after the retention period.
+    cleanup_request_files(
+        print_request, current_app.instance_path, include_receipt=False
+    )
     db.session.commit()
     flash('Print request cancelled.', 'success')
     return redirect(url_for('customer_bp.dashboard'))
@@ -322,6 +388,9 @@ def pay_for_request(request_id):
         return redirect(url_for('customer_bp.dashboard'))
     if print_request.payment_status == 'paid':
         flash('This request is already marked as paid.', 'success')
+        return redirect(url_for('customer_bp.dashboard'))
+    if print_request.payment_receipt_path or print_request.payment_status == 'for_verification':
+        flash('A payment receipt was already submitted. Wait for the printshop to verify it.', 'error')
         return redirect(url_for('customer_bp.dashboard'))
 
     payment_options = print_request.printshop.payment_options()
@@ -357,20 +426,28 @@ def pay_for_request(request_id):
 
     safe_filename = secure_filename(receipt.filename)
     extension = os.path.splitext(safe_filename)[1].lower()
-    if extension not in ALLOWED_RECEIPT_EXTENSIONS:
+    if extension not in ALLOWED_RECEIPT_EXTENSIONS or not is_valid_image_upload(receipt):
         flash('The receipt must be a JPG or PNG image.', 'error')
         return show_payment_page()
 
     receipt_folder = os.path.join(current_app.instance_path, 'payment_receipts')
-    os.makedirs(receipt_folder, exist_ok=True)
-    stored_filename = f'{uuid.uuid4().hex}_{safe_filename}'
-    receipt.save(os.path.join(receipt_folder, stored_filename))
-    stored_path = f'payment_receipts/{stored_filename}'
+    stored_path = save_image(receipt, receipt_folder, 'payment_receipts')
+    if stored_path is None:
+        flash('The receipt image could not be verified.', 'error')
+        return show_payment_page()
 
     if not print_request.submit_payment_receipt(payment_method, stored_path):
         flash('The payment information could not be saved.', 'error')
         return show_payment_page()
 
+    print_request.assign_payment_reference()
+    notify_printshop_workers(
+        print_request.printshop_id,
+        'Payment receipt submitted',
+        f'A receipt for {print_request.request_reference or ("Request #" + str(print_request.id))} is ready for review.',
+        url_for('shop_requests.receipts'),
+        'payment_receipt',
+    )
     db.session.commit()
     flash('Receipt submitted. The printshop will verify your payment.', 'success')
     return redirect(url_for('customer_bp.dashboard'))

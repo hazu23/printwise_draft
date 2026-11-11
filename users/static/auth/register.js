@@ -273,7 +273,10 @@ if (emailInput && emailFeedback) {
                 // Send the email to the Flask /check-email route as JSON.
                 const response = await fetch(emailInput.dataset.checkUrl, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.content || "",
+                    },
                     body: JSON.stringify({ email: emailInput.value }),
                 });
                 const result = await response.json();

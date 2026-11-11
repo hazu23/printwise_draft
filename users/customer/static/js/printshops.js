@@ -128,9 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Show opening hours and hide the no-contact message if any contact detail exists.
-        const hours = card.dataset.businessHours || '';
+        const hours = card.dataset.openingDetails || card.dataset.businessHours || '';
         get('printshop-modal-hours').textContent = hours;
         get('printshop-hours-row').classList.toggle('d-none', !hours);
+        const status = get('printshop-modal-status');
+        status.textContent = card.dataset.openingLabel || 'Hours not set';
+        status.className = `printshop-opening-status ${card.dataset.isOpen === 'true' ? 'is-open' : (card.dataset.isOpen === 'false' ? 'is-closed' : 'is-unknown')}`;
         get('printshop-modal-no-contact').classList.toggle(
             'd-none', hasPhone || hasEmail || Boolean(websiteUrl) || Boolean(hours)
         );

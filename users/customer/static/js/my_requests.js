@@ -23,7 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         byId('customer-request-modal-title').textContent = selectedRequest.service;
         byId('customer-request-modal-shop').textContent = selectedRequest.shop;
-        byId('customer-modal-request-id').textContent = `#${selectedRequest.id}`;
+        byId('customer-modal-request-id').textContent = selectedRequest.reference;
+        const paymentReferenceRow = byId('customer-modal-payment-reference-row');
+        paymentReferenceRow.hidden = !selectedRequest.payment_reference;
+        byId('customer-modal-payment-reference').textContent = selectedRequest.payment_reference || '';
         byId('customer-modal-submitted').textContent = selectedRequest.submitted;
         byId('customer-modal-quantity').textContent = String(selectedRequest.quantity);
         byId('customer-modal-file-count').textContent = String(selectedRequest.files.length);

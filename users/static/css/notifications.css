@@ -1,0 +1,20 @@
+.notification-page { max-width: 1000px; margin: 0 auto; }
+.notification-page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.notification-page-heading h1 { margin: 0; color: var(--ink-navy); font-size: clamp(2rem, 5vw, 2.7rem); font-weight: 800; }
+.notification-page-heading p:last-child { margin: .45rem 0 0; color: var(--slate); }
+.notification-eyebrow { margin: 0 0 .35rem; color: var(--print-blue); font-size: .76rem; font-weight: 800; letter-spacing: .09em; }
+.notification-list { overflow: hidden; border: 1px solid #dfe6ef; border-radius: 1rem; background: white; }
+.notification-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .9rem; padding: 1.1rem 1.25rem; border-bottom: 1px solid #e8edf3; }
+.notification-item:last-child { border-bottom: 0; }
+.notification-item.is-unread { background: #f3f7ff; }
+.notification-dot { width: .65rem; height: .65rem; border-radius: 50%; background: #c4ccd7; }
+.notification-item.is-unread .notification-dot { background: var(--print-blue); box-shadow: 0 0 0 .25rem #dfe8ff; }
+.notification-copy { min-width: 0; }
+.notification-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.notification-title-row h2 { margin: 0; color: var(--ink-navy); font-size: 1rem; font-weight: 750; }
+.notification-title-row time { flex: none; color: var(--slate); font-size: .75rem; }
+.notification-copy p { margin: .3rem 0 0; color: var(--slate); font-size: .9rem; }
+.notification-empty { padding: 3.5rem 1rem; border: 1px dashed #cdd6e1; border-radius: 1rem; text-align: center; }
+.notification-empty h2 { color: var(--ink-navy); font-size: 1.25rem; }
+.notification-empty p { margin: .35rem 0 0; color: var(--slate); }
+@media (max-width: 650px) { .notification-page-heading { align-items: stretch; flex-direction: column; } .notification-item { grid-template-columns: auto 1fr; } .notification-item form { grid-column: 2; } .notification-title-row { align-items: flex-start; flex-direction: column; gap: .25rem; } }

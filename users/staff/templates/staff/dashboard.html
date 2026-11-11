@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('staff_bp.static', filename='css/dashboard.css') }}">{% endblock %}
+
+{% block content %}
+<section class="worker-dashboard" aria-labelledby="dashboard-heading">
+    <header class="dashboard-heading"><div><p class="home-label">{{ page_shop_name }}</p><h1 id="dashboard-heading">Dashboard</h1><p>Here is the latest activity for your printshop.</p></div><a class="btn btn-primary" href="{{ url_for('shop_requests.new_walk_in_request') }}">Create print request</a></header>
+
+    {% if shops %}
+    <div class="dashboard-stats">
+        <a href="{{ url_for('shop_requests.inbox', status='pending') }}"><span>Pending</span><strong>{{ stats.pending }}</strong><small>Waiting for review</small></a>
+        <a href="{{ url_for('shop_requests.inbox', status='in_progress') }}"><span>Printing</span><strong>{{ stats.printing }}</strong><small>Being processed</small></a>
+        <a href="{{ url_for('shop_requests.inbox', status='ready') }}"><span>Ready</span><strong>{{ stats.ready }}</strong><small>For customer pickup</small></a>
+        <a href="{{ url_for('shop_requests.receipts') }}"><span>Receipts</span><strong>{{ stats.receipts }}</strong><small>Need verification</small></a>
+        <a href="{{ url_for('shop_requests.inbox') }}"><span>Today</span><strong>{{ stats.today }}</strong><small>New requests</small></a>
+    </div>
+
+    <section class="dashboard-recent" aria-labelledby="recent-heading"><div class="dashboard-section-heading"><div><h2 id="recent-heading">Recent requests</h2><p>The five newest requests sent to your printshop.</p></div><a href="{{ url_for('shop_requests.inbox') }}">View all requests →</a></div>
+        {% if recent_requests %}<div class="dashboard-request-list">{% for item in recent_requests %}<a class="dashboard-request-row" href="{{ url_for('shop_requests.inbox', q=item.request_reference or item.id) }}"><span><strong>{{ item.customer.full_name if item.customer else (item.walk_in_customer_name or 'In-store customer') }}</strong><small>{{ item.request_reference or ('Request #' ~ item.id) }} · {{ item.service.name }}</small></span><span class="dashboard-status status-{{ item.status }}">{{ {'in_progress':'Printing','ready':'Ready for pick up'}.get(item.status, item.status|replace('_',' ')|title) }}</span><time>{{ item.created_at.strftime('%b %d, %Y') if item.created_at else '' }}</time></a>{% endfor %}</div>
+        {% else %}<div class="dashboard-empty"><h3>No requests yet</h3><p>New customer and in-store requests will appear here.</p></div>{% endif %}
+    </section>
+    {% else %}<div class="dashboard-empty"><h2>No printshop assigned</h2><p>Ask an administrator to connect this account to a printshop.</p></div>{% endif %}
+</section>
+{% endblock %}

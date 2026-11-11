@@ -1,11 +1,13 @@
 import os
 import re
+from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+from sqlalchemy import or_
 
 from users import db
 from users.auth import is_valid_email
-from users.models import Account, Customer, PrintRequest, PrintShop
+from users.models import Account, Customer, PrintRequest, PrintShop, PrintShopServices
 from users.shop_helpers import save_image
 
 
@@ -124,7 +126,7 @@ def printshops():
             }
             for service in shop.active_services()
         ]
-        shop_cards.append({'shop': shop, 'services': services})
+        shop_cards.append({'shop': shop, 'services': services, 'opening_status': shop.opening_status()})
 
     return render_template('printshops.html', shop_cards=shop_cards)
 
@@ -139,9 +141,8 @@ def dashboard():
         abort(403)
 
     # Load this customer's requests, with the newest request shown first.
-    print_requests = PrintRequest.query.filter_by(
-        customer_account_id=session['user_id'],
-    ).order_by(PrintRequest.created_at.desc()).all()
+    base_query = PrintRequest.query.filter_by(customer_account_id=session['user_id'])
+    all_requests = base_query.order_by(PrintRequest.created_at.desc()).all()
 
     # Only allow the three status filters shown on the page.
     selected_status = request.args.get('status', 'all')
@@ -150,15 +151,41 @@ def dashboard():
 
     # Count a few common statuses for the summary at the top of the page.
     status_counts = {
-        'in_progress': sum(item.status == 'in_progress' for item in print_requests),
-        'ready': sum(item.status == 'ready' for item in print_requests),
-        'completed': sum(item.status == 'completed' for item in print_requests),
+        'in_progress': sum(item.status == 'in_progress' for item in all_requests),
+        'ready': sum(item.status == 'ready' for item in all_requests),
+        'completed': sum(item.status == 'completed' for item in all_requests),
     }
 
-    # Keep the total count for the summary, then show only the selected status.
-    total_requests = len(print_requests)
+    # Search and dates narrow the visible list but do not change summary totals.
+    total_requests = len(all_requests)
+    search = request.args.get('q', '').strip()[:100]
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+    filtered_query = base_query
+    if search:
+        pattern = f'%{search}%'
+        filtered_query = filtered_query.join(PrintShop, PrintRequest.printshop_id == PrintShop.id).join(
+            PrintShopServices, PrintRequest.service_id == PrintShopServices.id
+        ).filter(or_(
+            PrintShop.name.ilike(pattern),
+            PrintShopServices.name.ilike(pattern),
+            PrintRequest.request_reference.ilike(pattern),
+            PrintRequest.payment_reference.ilike(pattern),
+        ))
+    try:
+        if date_from:
+            filtered_query = filtered_query.filter(PrintRequest.created_at >= datetime.strptime(date_from, '%Y-%m-%d'))
+        if date_to:
+            filtered_query = filtered_query.filter(PrintRequest.created_at < datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1))
+    except ValueError:
+        flash('Choose valid dates for the filters.', 'error')
     if selected_status != 'all':
-        print_requests = [item for item in print_requests if item.status == selected_status]
+        filtered_query = filtered_query.filter(PrintRequest.status == selected_status)
+    page = request.args.get('page', 1, type=int)
+    pagination = filtered_query.order_by(
+        PrintRequest.created_at.desc(), PrintRequest.id.desc()
+    ).paginate(page=max(page, 1), per_page=10, error_out=False)
+    print_requests = pagination.items
 
     # Keep the saved filenames private, but prepare a safe view link for each file.
     request_files = {}
@@ -180,6 +207,8 @@ def dashboard():
 
         request_details.append({
             'id': print_request.id,
+            'reference': print_request.request_reference or f'Request #{print_request.id}',
+            'payment_reference': print_request.payment_reference or '',
             'shop': print_request.printshop.name,
             'service': print_request.service.name,
             'submitted': print_request.created_at.strftime('%b %d, %Y') if print_request.created_at else 'Date unavailable',
@@ -197,4 +226,8 @@ def dashboard():
         total_requests=total_requests,
         request_files=request_files,
         request_details=request_details,
+        pagination=pagination,
+        search=search,
+        date_from=date_from,
+        date_to=date_to,
     )

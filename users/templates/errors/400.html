@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Request Expired | PrintWise{% endblock %}
+{% block content %}
+<section class="pw-error-page" aria-labelledby="error-heading">
+    <p class="pw-error-code">400</p><h1 id="error-heading">Please try that again</h1>
+    <p>{{ error.description or 'The request could not be processed.' }}</p>
+    <a class="btn btn-primary" href="{{ url_for('customer_bp.index') }}">Return home</a>
+</section>
+{% endblock %}

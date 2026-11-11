@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!selectedRequest) return;
 
         byId('request-modal-title').textContent = selectedRequest.service;
-        byId('request-modal-id').textContent = `Request #${selectedRequest.id} · ${selectedRequest.shop} · ${selectedRequest.submitted}`;
+        byId('request-modal-id').textContent = `${selectedRequest.reference} · ${selectedRequest.shop} · ${selectedRequest.submitted}`;
         byId('request-modal-customer-name').textContent = selectedRequest.customer_name;
 
         const emailLink = byId('request-modal-customer-email');
@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
         receiptSection.hidden = !selectedRequest.payment_receipt_url;
         byId('request-modal-payment-method').textContent = selectedRequest.payment_method
             ? `Submitted through ${selectedRequest.payment_method}`
+            : '';
+        byId('request-modal-payment-reference').textContent = selectedRequest.payment_reference
+            ? `Payment reference: ${selectedRequest.payment_reference}`
             : '';
         byId('request-modal-receipt-link').href = selectedRequest.payment_receipt_url || '#';
 

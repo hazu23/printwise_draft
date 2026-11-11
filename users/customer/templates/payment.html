@@ -15,7 +15,7 @@
 
     <div class="payment-summary">
         <div>
-            <span>Request #{{ print_request.id }}</span>
+            <span>{{ print_request.request_reference or ('Request #' ~ print_request.id) }}</span>
             <strong>{{ print_request.printshop.name }}</strong>
             <small>{{ print_request.service.name }}</small>
         </div>
@@ -27,6 +27,7 @@
 
     {% if payment_qr_available %}
     <form class="payment-form" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <fieldset>
             <legend>1. Choose a payment service to view its QR code</legend>
             <div class="payment-methods">
@@ -69,7 +70,7 @@
 
         {% if print_request.payment_receipt_path %}
             <p class="payment-existing-receipt">
-                A receipt was already submitted.
+                A receipt was already submitted{% if print_request.payment_reference %} ({{ print_request.payment_reference }}){% endif %}.
                 <a href="{{ url_for('request_bp.view_payment_receipt', request_id=print_request.id) }}" target="_blank" rel="noopener">View receipt</a>
             </p>
         {% endif %}

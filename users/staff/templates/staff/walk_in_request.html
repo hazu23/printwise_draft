@@ -21,6 +21,7 @@
     {% set existing_price = print_request.price if is_editing and print_request.price is not none else '' %}
 
     <form class="request-form" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="request-form-field">
             <label for="walk-in-customer-name">Customer name <span class="request-optional">(optional)</span></label>
             <input id="walk-in-customer-name" name="customer_name" class="form-control" type="text"
@@ -96,7 +97,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script id="request-service-options" type="application/json">{{ service_options|tojson }}</script>
-<script id="request-selected-options" type="application/json">{{ selected_options|tojson }}</script>
+<script id="request-service-options" type="application/json" nonce="{{ csp_nonce() }}">{{ service_options|tojson }}</script>
+<script id="request-selected-options" type="application/json" nonce="{{ csp_nonce() }}">{{ selected_options|tojson }}</script>
 <script src="{{ url_for('customer_bp.static', filename='js/request_form.js') }}"></script>
 {% endblock %}

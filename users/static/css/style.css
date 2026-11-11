@@ -1219,3 +1219,38 @@ main > section {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Shared branded error pages. */
+.pw-error-page {
+    max-width: 640px;
+    margin: clamp(2rem, 8vw, 6rem) auto;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    border: 1px solid #dfe6ef;
+    border-radius: 1.25rem;
+    background: white;
+    text-align: center;
+    box-shadow: 0 1rem 2.5rem rgba(24, 50, 75, 0.08);
+}
+.pw-error-code { margin: 0 0 .5rem; color: var(--print-blue); font-size: .85rem; font-weight: 800; letter-spacing: .14em; }
+.pw-error-page h1 { margin: 0; color: var(--ink-navy); font-size: clamp(1.7rem, 5vw, 2.5rem); font-weight: 800; }
+.pw-error-page > p:not(.pw-error-code) { margin: .8rem auto 1.4rem; color: var(--slate); }
+
+/* Notification bell and the quick notification modal used by every role. */
+.notification-bell { position: relative; display: grid; place-items: center; width: 2.45rem; height: 2.45rem; padding: 0; border: 1px solid #ffffff70; border-radius: 50%; background: transparent; color: white; font-size: 1.05rem; }
+.notification-bell:hover, .notification-bell:focus-visible { background: #ffffff1f; }
+.notification-badge { position: absolute; top: -.35rem; right: -.45rem; min-width: 1.25rem; padding: .1rem .3rem; border: 2px solid var(--print-blue); border-radius: 2rem; background: var(--bright-coral); color: white; font-size: .62rem; font-weight: 800; line-height: 1; }
+.notification-modal-dialog { max-width: 430px; margin-right: 1rem; }
+.notification-modal-content { overflow: hidden; border: 0; border-radius: 1rem; }
+.notification-modal-list { padding: 0; }
+.notification-modal-item { display: grid; grid-template-columns: auto 1fr; gap: .7rem; padding: 1rem 1.15rem; border-bottom: 1px solid #e8edf3; }
+.notification-modal-item.is-unread { background: #f2f6ff; }
+.notification-modal-dot { width: .55rem; height: .55rem; margin-top: .35rem; border-radius: 50%; background: #c4ccd7; }
+.notification-modal-item.is-unread .notification-modal-dot { background: var(--print-blue); }
+.notification-modal-item strong { color: var(--ink-navy); font-size: .9rem; }
+.notification-modal-item p { margin: .2rem 0; color: var(--slate); font-size: .82rem; line-height: 1.4; }
+.notification-modal-item small { color: #788596; font-size: .7rem; }
+.printshop-opening-status { display: inline-flex; padding: .25rem .6rem; border-radius: 2rem; font-size: .76rem; font-weight: 750; }
+.printshop-opening-status.is-open { background: #e4f5eb; color: #216944; }
+.printshop-opening-status.is-closed { background: #fde9e7; color: #9a342e; }
+.printshop-opening-status.is-unknown { background: #edf1f5; color: #5f6d7c; }
+@media (max-width: 575px) { .notification-modal-dialog { max-width: none; margin: .75rem; } }

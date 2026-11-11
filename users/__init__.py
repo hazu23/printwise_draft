@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from flask import Flask, request, session
+from flask import Flask, render_template, request, session
 from flask_sqlalchemy import SQLAlchemy
 import os
 import secrets
@@ -48,7 +48,10 @@ def create_app():
     app = Flask(__name__)
     production = _is_production()
     app.config['SECRET_KEY'] = _load_secret_key(app, production)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", DATABASE_URL)
+    environment_database = os.environ.get('DATABASE_URL')
+    if production and not environment_database:
+        raise RuntimeError('DATABASE_URL must be set in the production environment.')
+    app.config['SQLALCHEMY_DATABASE_URI'] = environment_database or DATABASE_URL
     # Flask stores a signed session identifier in a cookie. These settings keep
     # JavaScript from reading it, restrict cross-site sending, and expire it.
     app.config['SESSION_COOKIE_NAME'] = 'printwise_session'
@@ -63,6 +66,11 @@ def create_app():
 
     # Attach SQLAlchemy to this Flask app so models and routes can use the DB.
     db.init_app(app)
+
+    # Require a valid session token on all POST, PUT, PATCH, and DELETE requests.
+    from users.security import init_browser_security, init_csrf
+    init_browser_security(app, production)
+    init_csrf(app)
 
     # Import the model classes before creating tables, so SQLAlchemy knows all
     # table definitions. create_all() creates missing tables; it does not alter
@@ -82,7 +90,7 @@ def create_app():
         if not account_id:
             return None
         account = models.Account.query.get(account_id)
-        if account is None:
+        if account is None or not account.is_active:
             session.clear()
             return None
         session['user_name'] = account.full_name
@@ -90,7 +98,7 @@ def create_app():
         if account.is_customer() and account.customer:
             session['user_profile_picture'] = account.customer.profile_picture_path
         else:
-            session.pop('user_profile_picture', None)
+            session['user_profile_picture'] = account.profile_picture_path
         return None
 
     # Import the route groups after the app and models are ready.
@@ -100,6 +108,9 @@ def create_app():
     from users.staff.requests import shop_requests_bp
     from users.staff.staff import staff_bp
     from users.admin.admin import admin_bp
+    from users.admin.staff_management import admin_staff_bp
+    from users.admin.service_management import admin_services_bp
+    from users.notifications import notifications_bp, register_notification_context
 
     # Register each blueprint so its routes become available in the app.
     app.register_blueprint(auth)
@@ -108,5 +119,33 @@ def create_app():
     app.register_blueprint(shop_requests_bp)
     app.register_blueprint(staff_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_staff_bp)
+    app.register_blueprint(admin_services_bp)
+    app.register_blueprint(notifications_bp)
+    register_notification_context(app)
+    from users.file_cleanup import register_cleanup_command
+    register_cleanup_command(app)
+
+    # Branded responses replace Flask's plain default error pages.
+    @app.errorhandler(400)
+    def bad_request(error):
+        return render_template('errors/400.html', error=error), 400
+
+    @app.errorhandler(403)
+    def forbidden(error):
+        return render_template('errors/403.html'), 403
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        db.session.rollback()
+        return render_template('errors/500.html'), 500
+
+    @app.errorhandler(413)
+    def upload_too_large(error):
+        return render_template('errors/413.html'), 413
 
     return app

@@ -6,6 +6,9 @@
 .shop-profile-eyebrow, .shop-profile-preview-label { margin: 0 0 .45rem; color: var(--print-blue); font-size: .75rem; font-weight: 750; letter-spacing: .08em; }
 .shop-profile-readonly { padding: .4rem .75rem; border-radius: 999px; background: #eef2f7; color: var(--slate); font-size: .8rem; font-weight: 700; }
 .shop-profile-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, .85fr); gap: 1.5rem; align-items: start; }
+.staff-readonly-profile .shop-profile-heading { max-width: 820px; margin-right: auto; margin-left: auto; }
+.staff-readonly-profile .shop-profile-layout { display: block; max-width: 820px; margin-right: auto; margin-left: auto; }
+.staff-readonly-profile .shop-profile-preview { width: 100%; }
 .shop-profile-preview, .shop-profile-form, .shop-profile-empty { padding: 1.5rem; border: 1px solid #dfe6ef; border-radius: 1rem; background: var(--paper-white); box-shadow: 0 .5rem 1.5rem #18324b0a; }
 .shop-profile-card-header { display: flex; align-items: center; gap: 1rem; padding-bottom: 1.25rem; }
 .shop-profile-card-header h2, .shop-profile-form h2 { margin: 0; color: var(--ink-navy); font-size: 1.3rem; font-weight: 750; }
@@ -30,6 +33,10 @@
 .shop-profile-form { display: grid; gap: 1rem; }
 .shop-profile-form label { display: grid; gap: .4rem; color: var(--ink-navy); font-size: .84rem; font-weight: 700; }
 .shop-profile-form label span { color: var(--slate); font-size: .75rem; font-weight: 500; }
+.shop-hours-settings { display: grid; gap: .65rem; padding: 1rem; border: 1px solid #dfe6ef; border-radius: .8rem; }
+.shop-hours-settings legend { float: none; width: auto; margin: 0; color: var(--ink-navy); font-size: .9rem; font-weight: 750; }
+.shop-hours-settings .form-check-label { display: flex; grid-template-columns: auto 1fr; align-items: center; gap: .55rem; }
+.shop-hours-settings small { color: var(--slate); }
 .shop-profile-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
 .shop-profile-picture-setting { display: grid; gap: .65rem; }
 .shop-profile-picture-actions { display: flex; flex-wrap: wrap; gap: .55rem; }

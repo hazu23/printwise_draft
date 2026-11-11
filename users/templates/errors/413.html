@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Upload Too Large | PrintWise{% endblock %}
+{% block content %}
+<section class="pw-error-page" aria-labelledby="error-heading">
+    <p class="pw-error-code">413</p><h1 id="error-heading">The upload is too large</h1>
+    <p>Keep the complete upload below 16 MB, then try submitting the form again.</p>
+    <a class="btn btn-primary" href="{{ url_for('customer_bp.index') }}">Return home</a>
+</section>
+{% endblock %}

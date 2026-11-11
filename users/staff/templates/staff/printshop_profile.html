@@ -3,7 +3,7 @@
 {% block stylesheets %}<link rel="stylesheet" href="{{ url_for('static', filename='css/printshop_profile.css') }}">{% endblock %}
 
 {% block content %}
-<section class="shop-profile-page" aria-labelledby="shop-profile-heading">
+<section class="shop-profile-page {% if session.get('user_role') == 'staff' %}staff-readonly-profile{% endif %}" aria-labelledby="shop-profile-heading">
     <header class="shop-profile-heading">
         <div><p class="shop-profile-eyebrow">YOUR PRINTSHOP</p><h1 id="shop-profile-heading">Printshop profile</h1><p>This is the information customers see in the PrintWise directory.</p></div>
         {% if session.get('user_role') == 'staff' %}<span class="shop-profile-readonly">View only</span>{% endif %}
@@ -32,7 +32,7 @@
                     {% if shop.contact_phone %}<div><dt>Phone</dt><dd>{{ shop.contact_phone }}</dd></div>{% endif %}
                     {% if shop.contact_email %}<div><dt>Email</dt><dd>{{ shop.contact_email }}</dd></div>{% endif %}
                     {% if shop.website %}<div><dt>Website</dt><dd><a href="{{ shop.website }}" target="_blank" rel="noopener noreferrer">Facebook profile</a></dd></div>{% endif %}
-                    {% if shop.business_hours %}<div><dt>Hours</dt><dd>{{ shop.business_hours }}</dd></div>{% endif %}
+                    {% set shop_status = shop.opening_status() %}<div><dt>Status</dt><dd>{{ shop_status.label }}</dd></div><div><dt>Hours</dt><dd>{{ shop_status.details }}</dd></div>
                 </dl>
                 {% if not shop.contact_phone and not shop.contact_email and not shop.website and not shop.business_hours %}<p>Contact details have not been added yet.</p>{% endif %}
             </section>

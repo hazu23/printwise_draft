@@ -84,6 +84,8 @@ def login():
         # Show an error if there is no account or the password is wrong.
         if account is None or not check_password_hash(account.password_hash, password):
             flash('Email or password is incorrect.', 'error')
+        elif not account.is_active:
+            flash('This account has been deactivated. Contact your printshop administrator.', 'error')
         else:
             session.clear()  # Remove any old session information.
             session['user_id'] = account.id
@@ -92,7 +94,7 @@ def login():
             session['user_profile_picture'] = (
                 account.customer.profile_picture_path
                 if account.is_customer() and account.customer
-                else None
+                else account.profile_picture_path
             )
             # Keep the signed-in session for up to the configured eight hours.
             session.permanent = True

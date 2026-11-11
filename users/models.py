@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 
 from . import db
@@ -13,12 +14,20 @@ class Account(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # customer, staff, or admin
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # Staff and admin profiles use these fields. Customer-specific contact and
+    # picture fields remain in the customers table for compatibility.
+    phone_number = db.Column(db.String(30), nullable=True)
+    profile_picture_path = db.Column(db.String(255), nullable=True)
 
     # lets me jump from an account to its extra info. 
     # uselist=False means you get one item, not a list.
     customer = db.relationship("Customer", back_populates="account", uselist=False)
     staff = db.relationship("Staff", back_populates="account", uselist=False)
     admin = db.relationship("Admin", back_populates="account", uselist=False)
+    notifications = db.relationship(
+        "Notification", back_populates="account", cascade="all, delete-orphan"
+    )
 
     # These methods keep role checks inside the Account class. Routes can ask
     # an account what it is allowed to do instead of comparing role text many times.
@@ -38,10 +47,8 @@ class Account(db.Model):
         """Return the Flask page name this account should see after logging in."""
         if self.is_customer():
             return "customer_bp.dashboard"
-        if self.has_role("admin"):
-            return "shop_requests.inbox"
-        if self.has_role("staff"):
-            return "staff_bp.index"
+        if self.is_shop_worker():
+            return "staff_bp.dashboard"
         return "customer_bp.index"
 
     def accessible_printshops(self):
@@ -92,6 +99,9 @@ class PrintShop(db.Model):
     contact_email = db.Column(db.String(255), nullable=True)
     website = db.Column(db.String(255), nullable=True)
     business_hours = db.Column(db.String(255), nullable=True)
+    opening_time = db.Column(db.Time, nullable=True)
+    closing_time = db.Column(db.Time, nullable=True)
+    temporarily_closed = db.Column(db.Boolean, nullable=False, default=False)
     # One payment QR is configured per printshop. The name tells customers
     # which app or payment service to use, such as GCash, Maya, or QR Ph.
     payment_qr_name = db.Column(db.String(50), nullable=True)
@@ -144,6 +154,24 @@ class PrintShop(db.Model):
             })
         return options
 
+    def opening_status(self):
+        """Return the shop's current open/closed label and display details."""
+        if self.temporarily_closed:
+            return {"is_open": False, "label": "Temporarily closed", "details": "This printshop is not accepting requests right now."}
+        if not self.opening_time or not self.closing_time:
+            return {"is_open": None, "label": "Hours not set", "details": self.business_hours or "Contact the printshop for its opening hours."}
+
+        philippine_time = timezone(timedelta(hours=8))
+        now_time = datetime.now(philippine_time).time().replace(tzinfo=None)
+        if self.opening_time <= self.closing_time:
+            is_open = self.opening_time <= now_time < self.closing_time
+        else:
+            # Overnight schedule, such as 8:00 PM until 2:00 AM.
+            is_open = now_time >= self.opening_time or now_time < self.closing_time
+        time_format = "%I:%M %p"
+        hours = f"{self.opening_time.strftime(time_format).lstrip('0')} to {self.closing_time.strftime(time_format).lstrip('0')}"
+        return {"is_open": is_open, "label": "Open now" if is_open else "Closed now", "details": hours}
+
 
 class PrintShopServices(db.Model):
     __tablename__ = "printshops_services"
@@ -170,6 +198,10 @@ class PrintRequest(db.Model):
     __tablename__ = "print_requests"
 
     id = db.Column(db.Integer, primary_key=True)
+    # Public references are safer and easier to read than exposing only a
+    # database row number to customers and printshop workers.
+    request_reference = db.Column(db.String(30), unique=True, nullable=True)
+    payment_reference = db.Column(db.String(30), unique=True, nullable=True)
     customer_account_id = db.Column(
         db.Integer, db.ForeignKey("accounts.id"), nullable=True
     )
@@ -267,6 +299,20 @@ class PrintRequest(db.Model):
         """Return file paths as a list even if old data is missing or incorrect."""
         return self.file_paths if isinstance(self.file_paths, list) else []
 
+    def assign_request_reference(self):
+        """Create the request reference after MySQL assigns this row an ID."""
+        if self.id and not self.request_reference:
+            date_part = (self.created_at or datetime.now()).strftime("%Y%m%d")
+            self.request_reference = f"PW-{date_part}-{self.id:06d}"
+        return self.request_reference
+
+    def assign_payment_reference(self):
+        """Create one payment reference when a receipt is first submitted."""
+        if self.id and not self.payment_reference:
+            date_part = (self.created_at or datetime.now()).strftime("%Y%m%d")
+            self.payment_reference = f"PAY-{date_part}-{self.id:06d}"
+        return self.payment_reference
+
 
 class Staff(db.Model):
     # A staff row links an account to the printshop where that person works.
@@ -281,3 +327,22 @@ class Staff(db.Model):
 
     account = db.relationship("Account", back_populates="staff")
     printshop = db.relationship("PrintShop", back_populates="staff_members")
+
+
+class Notification(db.Model):
+    """A saved alert that belongs to one customer, staff member, or admin."""
+
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(
+        db.Integer, db.ForeignKey("accounts.id"), nullable=False, index=True
+    )
+    title = db.Column(db.String(120), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    link = db.Column(db.String(255), nullable=True)
+    notification_type = db.Column(db.String(30), nullable=False, default="general")
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+
+    account = db.relationship("Account", back_populates="notifications")

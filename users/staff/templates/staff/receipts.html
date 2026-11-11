@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Payment Receipts | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('staff_bp.static', filename='css/receipts.css') }}">{% endblock %}
+
+{% block content %}
+<section class="receipt-page" aria-labelledby="receipt-heading">
+    <header class="receipt-heading"><div><p class="home-label">{{ page_shop_name }}</p><h1 id="receipt-heading">Payment receipts</h1><p>Review screenshots submitted by online customers.</p></div></header>
+
+    <form class="receipt-search" method="get"><label>Search receipts<input class="form-control" name="q" value="{{ search }}" placeholder="Customer, request, payment, or service"></label><label>From<input class="form-control" name="date_from" type="date" value="{{ date_from }}"></label><label>To<input class="form-control" name="date_to" type="date" value="{{ date_to }}"></label><button class="btn btn-primary" type="submit">Apply filters</button><a class="btn btn-outline-secondary" href="{{ url_for('shop_requests.receipts') }}">Clear</a></form>
+
+    {% if receipts %}
+    <div class="receipt-panel">
+        <div class="receipt-columns" aria-hidden="true"><span>Customer and request</span><span>Payment reference</span><span>Submitted</span><span>Status</span><span>Receipt</span></div>
+        {% for item in receipts %}
+        <article class="receipt-row">
+            <span class="receipt-customer"><strong>{{ item.customer.full_name if item.customer else (item.walk_in_customer_name or 'In-store customer') }}</strong><span>{{ item.request_reference or ('Request #' ~ item.id) }} · {{ item.service.name }}</span></span>
+            <span>{{ item.payment_reference or 'Not assigned' }}</span>
+            <time>{{ item.payment_submitted_at.strftime('%b %d, %Y at %I:%M %p') if item.payment_submitted_at else 'Date unavailable' }}</time>
+            <span class="receipt-status payment-{{ item.payment_status }}">{{ (item.payment_status or 'unpaid')|replace('_', ' ')|title }}</span>
+            <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#receipt-modal-{{ item.id }}">View receipt</button>
+        </article>
+
+        {% endfor %}
+    </div>
+    {% if pagination and pagination.pages > 1 %}<nav class="receipt-pagination" aria-label="Receipt pages">{% if pagination.has_prev %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('shop_requests.receipts', page=pagination.prev_num, q=search, date_from=date_from, date_to=date_to) }}">Previous</a>{% endif %}<span>Page {{ pagination.page }} of {{ pagination.pages }}</span>{% if pagination.has_next %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('shop_requests.receipts', page=pagination.next_num, q=search, date_from=date_from, date_to=date_to) }}">Next</a>{% endif %}</nav>{% endif %}
+    {% else %}<div class="receipt-empty"><h2>No receipts submitted</h2><p>Customer payment screenshots will appear here after submission.</p></div>{% endif %}
+</section>
+
+{# Modals must stay outside .receipt-panel because that table clips overflow. #}
+{% for item in receipts %}<div class="modal fade" id="receipt-modal-{{ item.id }}" tabindex="-1" aria-labelledby="receipt-modal-title-{{ item.id }}" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content receipt-modal-content"><div class="modal-header"><div><h2 class="modal-title fs-5" id="receipt-modal-title-{{ item.id }}">{{ item.payment_reference or 'Payment receipt' }}</h2><p class="small text-secondary mb-0">{{ item.request_reference or ('Request #' ~ item.id) }}</p></div><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><img src="{{ url_for('shop_requests.view_payment_receipt', request_id=item.id) }}" alt="Payment receipt for {{ item.request_reference or ('request ' ~ item.id) }}"></div></div></div></div>{% endfor %}
+{% block footer %}{% endblock %}
+{% endblock %}

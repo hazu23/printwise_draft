@@ -27,6 +27,9 @@
                                 data-contact-email="{{ shop.contact_email or '' }}"
                                 data-website="{{ shop.website or '' }}"
                                 data-business-hours="{{ shop.business_hours or '' }}"
+                                data-opening-label="{{ card.opening_status.label }}"
+                                data-opening-details="{{ card.opening_status.details }}"
+                                data-is-open="{{ 'true' if card.opening_status.is_open == true else ('false' if card.opening_status.is_open == false else '') }}"
                                 data-logo-url="{{ url_for('customer_bp.static', filename=shop.logo_path) if shop.logo_path else '' }}"
                                 data-request-url="{{ url_for('request_bp.new_print_request', shop_id=shop.id) }}"
                                 data-services="{{ card.services|tojson|forceescape }}">
@@ -84,6 +87,7 @@
                         <div id="printshop-email-row" class="d-none"><dt>Email</dt><dd><a id="printshop-modal-email"></a></dd></div>
                         <div id="printshop-website-row" class="d-none"><dt>Website</dt><dd><a id="printshop-modal-website" target="_blank" rel="noopener noreferrer"></a></dd></div>
                         <div id="printshop-hours-row" class="d-none"><dt>Hours</dt><dd id="printshop-modal-hours"></dd></div>
+                        <div id="printshop-status-row"><dt>Status</dt><dd><span id="printshop-modal-status" class="printshop-opening-status"></span></dd></div>
                     </dl>
                     <p id="printshop-modal-no-contact" class="text-secondary small mb-0">Contact details have not been added yet.</p>
                 </section>

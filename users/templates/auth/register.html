@@ -15,6 +15,7 @@
         <h2>Create your account</h2>
         <p class="auth-subtitle">It only takes a minute.</p>
         <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="name">Full Name</label>
             <input id="name" name="name" type="text" autocomplete="name" maxlength="50" aria-describedby="name-help" required value="{{ request.form.get('name', '') }}">
             <small id="name-help" class="auth-help" aria-live="polite" role="status"></small>

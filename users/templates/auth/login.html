@@ -15,6 +15,7 @@
         <h2>Log in to PrintWise</h2>
         <p class="auth-subtitle">Enter the email and password for your account.</p>
         <form method="post" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="email">Email address</label>
             <input id="email" name="email" type="email" autocomplete="email" required value="{{ request.form.get('email', '') }}">
             <label for="password">Password</label>

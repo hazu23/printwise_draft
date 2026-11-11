@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found | PrintWise{% endblock %}
+{% block content %}
+<section class="pw-error-page" aria-labelledby="error-heading">
+    <p class="pw-error-code">404</p><h1 id="error-heading">We could not find that page</h1>
+    <p>The address may be incorrect, or the page may have been moved.</p>
+    <a class="btn btn-primary" href="{{ url_for('customer_bp.index') }}">Return home</a>
+</section>
+{% endblock %}

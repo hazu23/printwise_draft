@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Access Denied | PrintWise{% endblock %}
+{% block content %}
+<section class="pw-error-page" aria-labelledby="error-heading">
+    <p class="pw-error-code">403</p><h1 id="error-heading">You cannot open this page</h1>
+    <p>Your account does not have permission to access this area of PrintWise.</p>
+    <a class="btn btn-primary" href="{{ url_for('customer_bp.index') }}">Return home</a>
+</section>
+{% endblock %}

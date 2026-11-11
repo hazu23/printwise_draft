@@ -1,9 +1,4 @@
-"""Add the PrintWise printshops and services to a fresh database.
-
-Run this file after the Flask app and MySQL database are set up:
-    python seed_printshops.py
-
-It does not create accounts, customer requests, or uploaded files."""
+from datetime import time
 
 from users import create_app, db
 from users.models import PrintShop, PrintShopServices
@@ -18,6 +13,7 @@ SEED_PRINTSHOPS = [
         "contact_email": "flexdotlab@gmail.com",
         "website": "https://www.facebook.com/flexlabprintingservices",
         "business_hours": None,
+        "opening_time": None, "closing_time": None,
         "services": [
             {"name": "Signage", "category": "service", "description": None, "options": None},
             {"name": "Tarpaulin", "category": "service", "description": None, "options": None},
@@ -38,6 +34,7 @@ SEED_PRINTSHOPS = [
         "contact_email": "ontheprint2@gmail.com",
         "website": "https://www.facebook.com/profile.php?id=61550864192190",
         "business_hours": "Anytime",
+        "opening_time": None, "closing_time": None,
         "services": [
             {
                 "name": "Print",
@@ -76,6 +73,7 @@ SEED_PRINTSHOPS = [
         "contact_email": "danhaidend@gmail.com",
         "website": "https://www.facebook.com/dan.haiden.dacuycuy.2025",
         "business_hours": "8:00 AM to 9:00 PM",
+        "opening_time": time(8, 0), "closing_time": time(21, 0),
         "services": [
             {"name": "Document printing", "category": "service", "description": "Regular print on regular bondpaper.", "options": None},
             {"name": "Photocopy/Xerox", "category": "service", "description": None, "options": None},
@@ -121,6 +119,8 @@ def add_or_update_printshop(shop_data):
     printshop.contact_email = shop_data["contact_email"]
     printshop.website = shop_data["website"]
     printshop.business_hours = shop_data["business_hours"]
+    printshop.opening_time = shop_data["opening_time"]
+    printshop.closing_time = shop_data["closing_time"]
 
     # Flush gives a new printshop an ID before its services are created.
     db.session.flush()

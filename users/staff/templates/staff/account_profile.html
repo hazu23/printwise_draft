@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}My Profile | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('customer_bp.static', filename='css/profile.css') }}">{% endblock %}
+
+{% block content %}
+<section class="customer-profile-page" aria-labelledby="worker-profile-heading">
+    <a class="customer-profile-back" href="{{ url_for('shop_requests.inbox') }}">← Back to requests</a>
+    <div class="customer-profile-layout">
+        <aside class="customer-profile-summary">
+            {% if account.profile_picture_path %}<img class="customer-profile-avatar customer-profile-avatar-image" src="{{ url_for('static', filename=account.profile_picture_path) }}" alt="{{ account.full_name }} profile picture">
+            {% else %}<span class="customer-profile-avatar" aria-hidden="true">{{ account.full_name[:1]|upper }}</span>{% endif %}
+            <h1 id="worker-profile-heading">{{ account.full_name }}</h1><p>{{ account.email }}</p>
+            <span class="customer-profile-role">{{ 'Admin' if account.role == 'admin' else 'Staff' }} account</span>
+            {% if account.profile_picture_path %}<div class="customer-profile-picture-actions"><button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#worker-picture-modal">View Image</button><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger btn-sm" type="submit" name="remove_profile_picture" value="1" formnovalidate data-confirm="Remove your profile picture?">Remove picture</button></form></div>{% endif %}
+        </aside>
+        <form class="customer-profile-form" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><p class="customer-profile-label">ACCOUNT SETTINGS</p><h2>Edit profile</h2></div>
+            <label for="worker-full-name">Full name</label><input id="worker-full-name" class="form-control" name="full_name" value="{{ account.full_name }}" maxlength="50" required>
+            <label for="worker-email">Email address</label><input id="worker-email" class="form-control" name="email" type="email" value="{{ account.email }}" maxlength="100" required>
+            <label for="worker-phone">Phone number <span>(Optional)</span></label><input id="worker-phone" class="form-control" name="phone_number" type="tel" value="{{ account.phone_number or '' }}" maxlength="30">
+            <label for="worker-picture">Profile picture <span>(Optional)</span></label><input id="worker-picture" class="form-control" name="profile_picture" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+            <div class="customer-profile-actions"><a class="btn btn-outline-secondary" href="{{ url_for('shop_requests.inbox') }}">Cancel</a><button class="btn btn-primary" type="submit">Save profile</button></div>
+        </form>
+    </div>
+    {% if account.profile_picture_path %}<div class="modal fade" id="worker-picture-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content customer-profile-picture-modal"><div class="modal-header"><h2 class="modal-title h5">Profile picture</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><img src="{{ url_for('static', filename=account.profile_picture_path) }}" alt="{{ account.full_name }} profile picture"></div></div></div></div>{% endif %}
+</section>
+{% endblock %}

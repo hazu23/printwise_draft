@@ -13,6 +13,7 @@
     </header>
 
     <form class="request-form" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="request-form-field">
             <label for="request-service">Service</label>
             <select id="request-service" name="service_id" class="form-select" required>
@@ -56,7 +57,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script id="request-service-options" type="application/json">{{ service_options|tojson }}</script>
-<script id="request-selected-options" type="application/json">{{ selected_options|tojson }}</script>
+<script id="request-service-options" type="application/json" nonce="{{ csp_nonce() }}">{{ service_options|tojson }}</script>
+<script id="request-selected-options" type="application/json" nonce="{{ csp_nonce() }}">{{ selected_options|tojson }}</script>
 <script src="{{ url_for('customer_bp.static', filename='js/request_form.js') }}"></script>
 {% endblock %}

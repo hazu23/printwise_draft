@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Manage Services | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('admin_bp.static', filename='css/admin_management.css') }}">{% endblock %}
+
+{% block content %}
+<section class="admin-management" aria-labelledby="services-heading">
+    <header class="admin-management-heading"><div><p class="admin-eyebrow">{{ shop.name if shop else 'YOUR PRINTSHOP' }}</p><h1 id="services-heading">Services and products</h1><p>Control what customers see in your printshop profile and request form.</p></div></header>
+
+    {% if shop %}
+    <div class="admin-management-grid">
+        <form class="admin-form-card" method="post" action="{{ url_for('admin_services.create_service') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><h2>Add an offering</h2><p>New active services appear in your public profile immediately.</p></div>
+            <label>Name<input class="form-control" name="name" maxlength="120" required></label>
+            <label>Category<select class="form-select" name="category" required><option value="service">Service</option><option value="product">Product</option></select></label>
+            <label>Description<textarea class="form-control" name="description" rows="4" maxlength="1000" placeholder="Explain what customers can order."></textarea></label>
+            <button class="btn btn-primary" type="submit">Add service or product</button>
+        </form>
+
+        <div class="admin-list-card">
+            <div class="admin-list-heading"><div><h2>Current offerings</h2><p>{{ offerings|length }} item{{ 's' if offerings|length != 1 else '' }}</p></div></div>
+            {% if offerings %}<div class="admin-service-list">
+                {% for offering in offerings %}
+                <details class="admin-service-record">
+                    <summary><span><strong>{{ offering.name }}</strong><small>{{ offering.category|title }} · {{ 'Active' if offering.is_active else 'Inactive' }}</small></span><span aria-hidden="true">⌄</span></summary>
+                    <div class="admin-service-editor">
+                        <form method="post" action="{{ url_for('admin_services.edit_service', service_id=offering.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <label>Name<input class="form-control" name="name" value="{{ offering.name }}" maxlength="120" required></label>
+                            <label>Category<select class="form-select" name="category"><option value="service" {% if offering.category == 'service' %}selected{% endif %}>Service</option><option value="product" {% if offering.category == 'product' %}selected{% endif %}>Product</option></select></label>
+                            <label>Description<textarea class="form-control" name="description" rows="3" maxlength="1000">{{ offering.description or '' }}</textarea></label>
+                            <button class="btn btn-primary btn-sm" type="submit">Save changes</button>
+                        </form>
+                        {% set option_config = option_configs.get(offering.id, {}) %}
+                        {% set selectable_fields = option_config.get('fields', [])|selectattr('choices', 'defined')|list %}
+                        {% if selectable_fields %}
+                        <form class="admin-option-form" method="post" action="{{ url_for('admin_services.edit_options', service_id=offering.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div><h3>Request options</h3><p>Add choices or turn choices on and off for this service.</p></div>
+                            {% for field in selectable_fields %}
+                            <fieldset class="admin-option-field"><legend>{{ field.label }}</legend>
+                                {% for choice in field.choices %}
+                                {% set choice_value = choice if choice is string else choice.value %}
+                                {% set choice_label = choice_value if choice is string else choice.get('label', choice_value) %}
+                                {% set choice_enabled = true if choice is string else choice.get('enabled', true) %}
+                                <div class="admin-option-row"><input class="form-check-input" name="choice_{{ field.key }}_{{ loop.index0 }}_enabled" type="checkbox" value="1" {% if choice_enabled %}checked{% endif %} aria-label="Enable {{ choice_label }}"><input class="form-control" name="choice_{{ field.key }}_{{ loop.index0 }}_value" value="{{ choice_value }}" maxlength="100" aria-label="Saved value"><input class="form-control" name="choice_{{ field.key }}_{{ loop.index0 }}_label" value="{{ choice_label }}" maxlength="150" aria-label="Customer label"></div>
+                                {% endfor %}
+                                <label>Add choices <span>(one per line)</span><textarea class="form-control" name="choice_{{ field.key }}_new" rows="2"{% if field.key == 'paper_size' %} placeholder="Example: A3"{% endif %}></textarea></label>
+                            </fieldset>
+                            {% endfor %}
+                            <button class="btn btn-outline-primary btn-sm" type="submit">Save request options</button>
+                        </form>
+                        {% endif %}
+                        <div class="admin-service-danger-actions">
+                            <form method="post" action="{{ url_for('admin_services.toggle_service', service_id=offering.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm {{ 'btn-outline-danger' if offering.is_active else 'btn-outline-success' }}" type="submit">{{ 'Deactivate' if offering.is_active else 'Activate' }}</button></form>
+                            {% set delete_message = 'Permanently delete ' ~ offering.name ~ ' and all of its service options? This cannot be undone.' %}<form method="post" action="{{ url_for('admin_services.delete_service', service_id=offering.id) }}" data-confirm="{{ delete_message }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-danger" type="submit">Delete permanently</button></form>
+                        </div>
+                    </div>
+                </details>
+                {% endfor %}
+            </div>{% else %}<div class="admin-empty"><h3>No services added yet</h3><p>Add your first service using the form.</p></div>{% endif %}
+        </div>
+    </div>
+    {% else %}<div class="admin-empty"><h2>No printshop connected</h2><p>Connect this admin account to a printshop before managing services.</p></div>{% endif %}
+</section>
+{% endblock %}

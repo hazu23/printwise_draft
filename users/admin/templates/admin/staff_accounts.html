@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Manage Staff | PrintWise{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ url_for('admin_bp.static', filename='css/admin_management.css') }}">{% endblock %}
+
+{% block content %}
+<section class="admin-management" aria-labelledby="staff-heading">
+    <header class="admin-management-heading">
+        <div><p class="admin-eyebrow">{{ shop.name if shop else 'YOUR PRINTSHOP' }}</p><h1 id="staff-heading">Staff accounts</h1><p>Create staff logins and control who can access your printshop requests.</p></div>
+    </header>
+
+    {% if shop %}
+    <div class="admin-management-grid">
+        <form class="admin-form-card" method="post" action="{{ url_for('admin_staff.create_staff') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><h2>Add staff member</h2><p>Give the employee these temporary login details.</p></div>
+            <label>Full name<input class="form-control" name="full_name" maxlength="50" required></label>
+            <label>Email address<input class="form-control" name="email" type="email" maxlength="100" required></label>
+            <label>Temporary password<input class="form-control" name="password" type="password" minlength="8" required></label>
+            <label>Confirm temporary password<input class="form-control" name="confirm_password" type="password" minlength="8" required></label>
+            <button class="btn btn-primary" type="submit">Create staff account</button>
+        </form>
+
+        <div class="admin-list-card">
+            <div class="admin-list-heading"><div><h2>Current staff</h2><p>{{ staff_members|length }} staff account{{ 's' if staff_members|length != 1 else '' }}</p></div></div>
+            {% if staff_members %}
+                <div class="admin-record-list">
+                {% for member in staff_members %}
+                    <article class="admin-record">
+                        <span class="admin-record-avatar" aria-hidden="true">{{ member.account.full_name[:1]|upper }}</span>
+                        <div class="admin-record-copy"><strong>{{ member.account.full_name }}</strong><span>{{ member.account.email }}</span><small class="{{ 'is-active' if member.account.is_active else 'is-inactive' }}">{{ 'Active' if member.account.is_active else 'Inactive' }}</small></div>
+                        <form method="post" action="{{ url_for('admin_staff.toggle_staff', account_id=member.account_id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm {{ 'btn-outline-danger' if member.account.is_active else 'btn-outline-success' }}" type="submit">{{ 'Deactivate' if member.account.is_active else 'Reactivate' }}</button>
+                        </form>
+                    </article>
+                {% endfor %}
+                </div>
+            {% else %}<div class="admin-empty"><h3>No staff accounts yet</h3><p>Create the first staff login using the form.</p></div>{% endif %}
+        </div>
+    </div>
+    {% else %}<div class="admin-empty"><h2>No printshop connected</h2><p>Connect this admin account to a printshop before creating staff.</p></div>{% endif %}
+</section>
+{% endblock %}

@@ -25,15 +25,17 @@
                 <button class="btn btn-outline-secondary btn-sm" type="button"
                         data-bs-toggle="modal" data-bs-target="#customer-profile-picture-modal">View Image</button>
                 <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn btn-outline-danger btn-sm" type="submit"
                             name="remove_profile_picture" value="1" formnovalidate
-                            onclick="return confirm('Remove your profile picture?');">Remove picture</button>
+                            data-confirm="Remove your profile picture?">Remove picture</button>
                 </form>
             </div>
             {% endif %}
         </aside>
 
         <form class="customer-profile-form" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <p class="customer-profile-label">ACCOUNT SETTINGS</p>
                 <h2>Edit profile</h2>

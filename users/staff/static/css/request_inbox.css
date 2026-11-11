@@ -12,6 +12,12 @@
     gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
+.request-list-search { display: grid; grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, .35fr)) auto auto; align-items: end; gap: .75rem; margin-bottom: 1rem; padding: 1rem; border: 1px solid #dfe6ef; border-radius: .9rem; background: white; }
+.request-list-search label { display: grid; gap: .3rem; color: var(--ink-navy); font-size: .78rem; font-weight: 700; }
+.request-inbox-filters .request-filter { text-decoration: none; }
+.request-pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1rem; color: var(--slate); font-size: .85rem; }
+@media (max-width: 850px) { .request-list-search { grid-template-columns: 1fr 1fr; } .request-list-search label:first-child { grid-column: 1 / -1; } }
+@media (max-width: 520px) { .request-list-search { grid-template-columns: 1fr; } .request-list-search label:first-child { grid-column: auto; } }
 
 .request-inbox-heading h1 {
     margin: 0 0 0.35rem;

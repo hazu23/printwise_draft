@@ -30,19 +30,21 @@
         <a class="btn btn-primary" href="{{ url_for('customer_bp.printshops') }}">Browse printshops</a>
     </header>
 
+    <form class="customer-request-search" method="get"><label>Search requests<input class="form-control" name="q" value="{{ search }}" placeholder="Printshop, service, or reference"></label><label>From<input class="form-control" name="date_from" type="date" value="{{ date_from }}"></label><label>To<input class="form-control" name="date_to" type="date" value="{{ date_to }}"></label><input type="hidden" name="status" value="{{ selected_status }}"><button class="btn btn-primary" type="submit">Apply filters</button><a class="btn btn-outline-secondary" href="{{ url_for('customer_bp.dashboard') }}">Clear</a></form>
+
     <nav class="request-summary" aria-label="Filter requests by status">
         <a class="request-summary-card {% if selected_status == 'in_progress' %}is-selected{% endif %}"
-           href="{{ url_for('customer_bp.dashboard', status='in_progress') }}"
+           href="{{ url_for('customer_bp.dashboard', status='in_progress', q=search, date_from=date_from, date_to=date_to) }}"
            {% if selected_status == 'in_progress' %}aria-current="page"{% endif %}>
             <span class="request-summary-number">{{ status_counts.in_progress }}</span><span>Printing</span>
         </a>
         <a class="request-summary-card {% if selected_status == 'ready' %}is-selected{% endif %}"
-           href="{{ url_for('customer_bp.dashboard', status='ready') }}"
+           href="{{ url_for('customer_bp.dashboard', status='ready', q=search, date_from=date_from, date_to=date_to) }}"
            {% if selected_status == 'ready' %}aria-current="page"{% endif %}>
             <span class="request-summary-number">{{ status_counts.ready }}</span><span>Ready for pick up</span>
         </a>
         <a class="request-summary-card {% if selected_status == 'completed' %}is-selected{% endif %}"
-           href="{{ url_for('customer_bp.dashboard', status='completed') }}"
+           href="{{ url_for('customer_bp.dashboard', status='completed', q=search, date_from=date_from, date_to=date_to) }}"
            {% if selected_status == 'completed' %}aria-current="page"{% endif %}>
             <span class="request-summary-number">{{ status_counts.completed }}</span><span>Completed</span>
         </a>
@@ -52,7 +54,7 @@
         <h2>Recent requests</h2>
         <div class="request-list-actions">
             <a class="request-all-link {% if selected_status == 'all' %}is-active{% endif %}"
-               href="{{ url_for('customer_bp.dashboard') }}"
+               href="{{ url_for('customer_bp.dashboard', q=search, date_from=date_from, date_to=date_to) }}"
                {% if selected_status == 'all' %}aria-current="page"{% endif %}>All requests</a>
             <span class="text-secondary">{{ print_requests|length }} shown</span>
         </div>
@@ -71,7 +73,7 @@
                         <span class="customer-request-main">
                             <strong>{{ print_request.printshop.name }}</strong>
                             <span>{{ print_request.service.name }}</span>
-                            <small>Request #{{ print_request.id }}</small>
+                            <small>{{ print_request.request_reference or ('Request #' ~ print_request.id) }}</small>
                         </span>
 
                         <time class="customer-request-date">{{ print_request.created_at.strftime('%b %d, %Y') }}</time>
@@ -91,15 +93,19 @@
                         <span class="customer-request-actions">
                             {% if print_request.price is not none
                                   and print_request.payment_status != 'paid'
+                                  and not print_request.payment_receipt_path
                                   and print_request.status not in ('cancelled', 'declined') %}
                                 <a class="btn btn-primary btn-sm" href="{{ url_for('request_bp.pay_for_request', request_id=print_request.id) }}">Pay online</a>
+                            {% elif print_request.payment_receipt_path %}
+                                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Receipt submitted</button>
                             {% elif print_request.price is none %}
                                 <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Pay online</button>
                             {% endif %}
 
                             {% if print_request.status in ('pending', 'accepted') %}
                                 <form method="post" action="{{ url_for('request_bp.cancel_print_request', request_id=print_request.id) }}"
-                                      onsubmit="return confirm('Cancel this print request?');">
+                                      data-confirm="Cancel this print request?">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button class="btn btn-outline-danger btn-sm" type="submit">Cancel request</button>
                                 </form>
                             {% endif %}
@@ -108,6 +114,7 @@
                 {% endfor %}
             </div>
         </section>
+        {% if pagination.pages > 1 %}<nav class="customer-request-pagination" aria-label="My request pages">{% if pagination.has_prev %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('customer_bp.dashboard', page=pagination.prev_num, status=selected_status, q=search, date_from=date_from, date_to=date_to) }}">Previous</a>{% endif %}<span>Page {{ pagination.page }} of {{ pagination.pages }}</span>{% if pagination.has_next %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('customer_bp.dashboard', page=pagination.next_num, status=selected_status, q=search, date_from=date_from, date_to=date_to) }}">Next</a>{% endif %}</nav>{% endif %}
     {% elif total_requests > 0 %}
         <div class="requests-empty-state">
             <h2>No matching requests</h2>
@@ -137,7 +144,8 @@
                 <section class="customer-modal-section" aria-labelledby="customer-modal-summary-heading">
                     <h3 id="customer-modal-summary-heading">Request summary</h3>
                     <dl class="customer-modal-summary">
-                        <div><dt>Request number</dt><dd id="customer-modal-request-id"></dd></div>
+                        <div><dt>Request reference</dt><dd id="customer-modal-request-id"></dd></div>
+                        <div id="customer-modal-payment-reference-row" hidden><dt>Payment reference</dt><dd id="customer-modal-payment-reference"></dd></div>
                         <div><dt>Submitted</dt><dd id="customer-modal-submitted"></dd></div>
                         <div><dt>Quantity</dt><dd id="customer-modal-quantity"></dd></div>
                         <div><dt>Files uploaded</dt><dd id="customer-modal-file-count"></dd></div>
@@ -163,7 +171,7 @@
     </div>
 </div>
 
-<script id="customer-request-data" type="application/json">{{ request_details|tojson }}</script>
+<script id="customer-request-data" type="application/json" nonce="{{ csp_nonce() }}">{{ request_details|tojson }}</script>
 {% block footer %}{% endblock %}
 {% endblock %}
 

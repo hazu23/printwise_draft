@@ -1,0 +1,42 @@
+.admin-management { max-width: 1180px; margin: 0 auto; padding: .75rem 0 2rem; }
+.admin-management-heading { margin-bottom: 1.5rem; }
+.admin-management-heading h1 { margin: 0; color: var(--ink-navy); font-size: clamp(1.9rem, 4vw, 2.5rem); font-weight: 800; }
+.admin-management-heading p:last-child { margin: .45rem 0 0; color: var(--slate); }
+.admin-eyebrow { margin: 0 0 .4rem; color: var(--print-blue); font-size: .76rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.admin-management-grid { display: grid; grid-template-columns: minmax(300px, .75fr) minmax(0, 1.25fr); gap: 1.25rem; align-items: start; }
+.admin-form-card, .admin-list-card, .admin-empty { padding: 1.4rem; border: 1px solid #dfe6ef; border-radius: 1rem; background: white; box-shadow: 0 .5rem 1.5rem #18324b0a; }
+.admin-form-card { display: grid; gap: .8rem; }
+.admin-form-card h2, .admin-list-card h2, .admin-empty h2, .admin-empty h3 { margin: 0; color: var(--ink-navy); font-size: 1.1rem; font-weight: 750; }
+.admin-form-card > div p, .admin-list-heading p, .admin-empty p { margin: .3rem 0 0; color: var(--slate); font-size: .84rem; }
+.admin-form-card label, .admin-service-editor label { display: grid; gap: .35rem; color: var(--ink-navy); font-size: .8rem; font-weight: 700; }
+.admin-list-heading { padding-bottom: 1rem; border-bottom: 1px solid #e6ebf2; }
+.admin-record-list { display: grid; }
+.admin-record { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .85rem; padding: 1rem 0; border-bottom: 1px solid #edf0f4; }
+.admin-record:last-child { border-bottom: 0; padding-bottom: 0; }
+.admin-record-avatar { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #eaf0ff; color: var(--print-blue); font-weight: 750; }
+.admin-record-copy { display: flex; min-width: 0; flex-direction: column; }
+.admin-record-copy strong { color: var(--ink-navy); }
+.admin-record-copy span { overflow: hidden; color: var(--slate); font-size: .8rem; text-overflow: ellipsis; white-space: nowrap; }
+.admin-record-copy small { width: max-content; margin-top: .25rem; font-size: .72rem; font-weight: 700; }
+.admin-record-copy .is-active { color: #24734b; }
+.admin-record-copy .is-inactive { color: #a33a3a; }
+.admin-service-record { border-bottom: 1px solid #e6ebf2; }
+.admin-service-record summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 0; cursor: pointer; list-style: none; }
+.admin-service-record summary::-webkit-details-marker { display: none; }
+.admin-service-record summary > span:first-child { display: flex; flex-direction: column; }
+.admin-service-record summary strong { color: var(--ink-navy); }
+.admin-service-record summary small { color: var(--slate); font-size: .75rem; font-weight: 500; }
+.admin-service-editor { display: grid; gap: .7rem; padding: 0 0 1rem; }
+.admin-service-editor form:first-child { display: grid; gap: .7rem; }
+.admin-option-form { display: grid; gap: .8rem; padding: 1rem; border: 1px solid #dfe6ef; border-radius: .8rem; background: #f8fafc; }
+.admin-option-form h3 { margin: 0; color: var(--ink-navy); font-size: .95rem; font-weight: 750; }
+.admin-option-form p { margin: .25rem 0 0; color: var(--slate); font-size: .78rem; }
+.admin-option-field { display: grid; gap: .55rem; padding: .8rem; border: 1px solid #dfe6ef; border-radius: .7rem; background: white; }
+.admin-option-field legend { float: none; width: auto; margin: 0; color: var(--ink-navy); font-size: .84rem; font-weight: 750; }
+.admin-option-row { display: grid; grid-template-columns: auto minmax(100px, .7fr) minmax(140px, 1.3fr); align-items: center; gap: .5rem; }
+.admin-option-field label span { color: var(--slate); font-size: .72rem; font-weight: 500; }
+.admin-service-danger-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .65rem; padding-top: .75rem; border-top: 1px solid #e5eaf0; }
+.admin-service-danger-actions form { margin: 0; }
+.admin-empty { text-align: center; }
+@media (max-width: 850px) { .admin-management-grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .admin-record { grid-template-columns: auto 1fr; } .admin-record form { grid-column: 1 / -1; } .admin-record form .btn { width: 100%; } }

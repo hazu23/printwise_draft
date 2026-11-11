@@ -1,4 +1,9 @@
 /* Customer dashboard and print request tracking page. */
+.customer-request-search { display: grid; grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, .35fr)) auto auto; align-items: end; gap: .75rem; margin: 1rem 0 1.25rem; padding: 1rem; border: 1px solid #dfe6ef; border-radius: .9rem; background: white; }
+.customer-request-search label { display: grid; gap: .3rem; color: var(--ink-navy); font-size: .78rem; font-weight: 700; }
+.customer-request-pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1rem; color: var(--slate); font-size: .85rem; }
+@media (max-width: 750px) { .customer-request-search { grid-template-columns: 1fr 1fr; } .customer-request-search label:first-child { grid-column: 1 / -1; } }
+@media (max-width: 480px) { .customer-request-search { grid-template-columns: 1fr; } .customer-request-search label:first-child { grid-column: auto; } }
 .customer-requests {
     max-width: 1180px;
     margin: 0 auto;

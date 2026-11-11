@@ -5,7 +5,7 @@
 {% block content %}
 <section class="request-confirmation" aria-labelledby="request-confirmation-heading">
     <div class="request-confirmation-mark" aria-hidden="true">✓</div>
-    <p class="home-label">REQUEST #{{ print_request.id }}</p>
+    <p class="home-label">{{ print_request.request_reference or ('REQUEST #' ~ print_request.id) }}</p>
     <h1 id="request-confirmation-heading">Your request was sent</h1>
     <p class="text-secondary">{{ print_request.printshop.name }} will review your request and confirm the price.</p>
 

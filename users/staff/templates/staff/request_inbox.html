@@ -21,6 +21,8 @@
         {% endif %}
     </header>
 
+    {% if has_shop %}<form class="request-list-search" method="get"><label>Search requests<input class="form-control" name="q" value="{{ search }}" placeholder="Customer, reference, or service"></label><label>From<input class="form-control" name="date_from" type="date" value="{{ date_from }}"></label><label>To<input class="form-control" name="date_to" type="date" value="{{ date_to }}"></label><input type="hidden" name="status" value="{{ selected_status }}"><button class="btn btn-primary" type="submit">Apply filters</button><a class="btn btn-outline-secondary" href="{{ url_for('shop_requests.inbox') }}">Clear</a></form>{% endif %}
+
     {% if not has_shop %}
         <div class="request-inbox-empty" role="status">
             <h2>No printshop is linked to this account</h2>
@@ -34,13 +36,7 @@
             </div>
 
             <div class="request-inbox-filters" role="group" aria-label="Filter requests by status">
-                <button class="request-filter is-active" type="button" data-request-filter="all" aria-pressed="true">All <span>{{ status_counts.all }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="pending" aria-pressed="false">Pending <span>{{ status_counts.pending }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="accepted" aria-pressed="false">Accepted <span>{{ status_counts.accepted }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="in_progress" aria-pressed="false">Printing <span>{{ status_counts.in_progress }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="ready" aria-pressed="false">Ready for pick up <span>{{ status_counts.ready }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="completed" aria-pressed="false">Completed <span>{{ status_counts.completed }}</span></button>
-                <button class="request-filter" type="button" data-request-filter="declined" aria-pressed="false">Declined <span>{{ status_counts.declined }}</span></button>
+                {% for key, label in [('all','All'),('pending','Pending'),('accepted','Accepted'),('in_progress','Printing'),('ready','Ready for pick up'),('completed','Completed'),('declined','Declined')] %}<a class="request-filter {% if selected_status == key %}is-active{% endif %}" href="{{ url_for('shop_requests.inbox', status=key, q=search, date_from=date_from, date_to=date_to) }}">{{ label }} <span>{{ status_counts[key] }}</span></a>{% endfor %}
             </div>
 
             <div class="request-inbox-column-labels" aria-hidden="true">
@@ -60,6 +56,7 @@
                             <span class="request-row-copy">
                                 <strong>{{ item.customer_name }}</strong>
                                 <span>{{ item.service }} · {{ item.quantity }} {{ item.quantity_unit }}{% if item.is_staff_created %} · Staff-created{% endif %}</span>
+                                <small>{{ item.reference }}</small>
                                 {% if shops|length > 1 %}<small>{{ item.shop }}</small>{% endif %}
                             </span>
                         </span>
@@ -77,6 +74,7 @@
                 {% endfor %}
             </div>
         </section>
+        {% if pagination and pagination.pages > 1 %}<nav class="request-pagination" aria-label="Request pages">{% if pagination.has_prev %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('shop_requests.inbox', page=pagination.prev_num, status=selected_status, q=search, date_from=date_from, date_to=date_to) }}">Previous</a>{% endif %}<span>Page {{ pagination.page }} of {{ pagination.pages }}</span>{% if pagination.has_next %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('shop_requests.inbox', page=pagination.next_num, status=selected_status, q=search, date_from=date_from, date_to=date_to) }}">Next</a>{% endif %}</nav>{% endif %}
     {% endif %}
 </section>
 
@@ -84,6 +82,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content request-details-modal-content">
             <form id="request-update-form" method="post" action="" class="request-update-form-shell">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
                 <div>
                     <h2 class="modal-title fs-5" id="request-modal-title">Request details</h2>
@@ -126,6 +125,7 @@
                 <section id="request-modal-receipt-section" class="request-modal-section" aria-labelledby="request-modal-receipt-heading" hidden>
                     <h3 id="request-modal-receipt-heading">Payment receipt</h3>
                     <p id="request-modal-payment-method" class="request-modal-notes"></p>
+                    <p id="request-modal-payment-reference" class="request-modal-notes"></p>
                     <a id="request-modal-receipt-link" class="request-modal-file-link" href="#" target="_blank" rel="noopener">View uploaded receipt</a>
                 </section>
 
@@ -174,7 +174,7 @@
     </div>
 </div>
 
-<script id="request-inbox-data" type="application/json">{{ request_details|tojson }}</script>
+<script id="request-inbox-data" type="application/json" nonce="{{ csp_nonce() }}">{{ request_details|tojson }}</script>
 {% block footer %}{% endblock %}
 {% endblock %}
 

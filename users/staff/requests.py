@@ -1,15 +1,19 @@
 import os
 import uuid
+from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.utils import secure_filename
+from sqlalchemy import or_
 
 from users import db
-from users.models import Account, PrintRequest
+from users.models import Account, PrintRequest, PrintShopServices
+from users.notifications import notify_account
 from users.customer.print_requests import (
     ALLOWED_PRINT_FILE_EXTENSIONS,
     REQUEST_HIDDEN_SERVICE_NAMES,
     _request_options_for,
+    is_valid_print_upload,
 )
 
 
@@ -55,6 +59,40 @@ def _get_display_filename(stored_path):
     return stored_name
 
 
+def _filtered_request_query(shop_ids, include_cancelled=False, receipt_only=False):
+    """Build the worker list query from search and date filter parameters."""
+    query = PrintRequest.query.filter(PrintRequest.printshop_id.in_(shop_ids))
+    if not include_cancelled:
+        query = query.filter(PrintRequest.status != 'cancelled')
+    if receipt_only:
+        query = query.filter(PrintRequest.payment_receipt_path.isnot(None))
+
+    search = request.args.get('q', '').strip()[:100]
+    if search:
+        pattern = f'%{search}%'
+        query = query.outerjoin(Account, PrintRequest.customer_account_id == Account.id).join(
+            PrintShopServices, PrintRequest.service_id == PrintShopServices.id
+        ).filter(or_(
+            Account.full_name.ilike(pattern),
+            PrintRequest.walk_in_customer_name.ilike(pattern),
+            PrintRequest.request_reference.ilike(pattern),
+            PrintRequest.payment_reference.ilike(pattern),
+            PrintShopServices.name.ilike(pattern),
+        ))
+
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+    date_column = PrintRequest.payment_submitted_at if receipt_only else PrintRequest.created_at
+    try:
+        if date_from:
+            query = query.filter(date_column >= datetime.strptime(date_from, '%Y-%m-%d'))
+        if date_to:
+            query = query.filter(date_column < datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1))
+    except ValueError:
+        flash('Choose valid dates for the filters.', 'error')
+    return query, search, date_from, date_to
+
+
 def _make_request_details(print_request):
     """Prepare request information for the details modal."""
     # These are the clear status names shown to staff and admins.
@@ -94,6 +132,8 @@ def _make_request_details(print_request):
 
     return {
         'id': print_request.id,
+        'reference': print_request.request_reference or f'Request #{print_request.id}',
+        'payment_reference': print_request.payment_reference or '',
         'shop': print_request.printshop.name,
         'customer_name': customer_name,
         'customer_contact': customer_contact,
@@ -134,15 +174,30 @@ def inbox():
     shops = _get_accessible_shops()
     shop_ids = [shop.id for shop in shops]
     print_requests = []
+    pagination = None
+    selected_status = request.args.get('status', 'all')
+    allowed_statuses = {'all', 'pending', 'accepted', 'in_progress', 'ready', 'completed', 'declined'}
+    if selected_status not in allowed_statuses:
+        selected_status = 'all'
+    search = request.args.get('q', '').strip()[:100]
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
     if shop_ids:
-        print_requests = PrintRequest.query.filter(
-            PrintRequest.printshop_id.in_(shop_ids),
-            PrintRequest.status != 'cancelled',
-        ).order_by(PrintRequest.created_at.desc(), PrintRequest.id.desc()).all()
+        filtered_query, search, date_from, date_to = _filtered_request_query(shop_ids)
+        all_filtered = filtered_query.all()
+        if selected_status != 'all':
+            filtered_query = filtered_query.filter(PrintRequest.status == selected_status)
+        page = request.args.get('page', 1, type=int)
+        pagination = filtered_query.order_by(
+            PrintRequest.created_at.desc(), PrintRequest.id.desc()
+        ).paginate(page=max(page, 1), per_page=10, error_out=False)
+        print_requests = pagination.items
+    else:
+        all_filtered = []
 
     request_details = [_make_request_details(item) for item in print_requests]
     status_counts = {
-        'all': len(request_details),
+        'all': len(all_filtered),
         'pending': 0,
         'accepted': 0,
         'in_progress': 0,
@@ -150,9 +205,9 @@ def inbox():
         'completed': 0,
         'declined': 0,
     }
-    for item in request_details:
-        if item['status'] in status_counts:
-            status_counts[item['status']] += 1
+    for item in all_filtered:
+        if item.status in status_counts:
+            status_counts[item.status] += 1
 
     if len(shops) == 1:
         page_shop_name = shops[0].name
@@ -168,6 +223,53 @@ def inbox():
         page_shop_name=page_shop_name,
         has_shop=bool(shops),
         shops=shops,
+        pagination=pagination,
+        selected_status=selected_status,
+        search=search,
+        date_from=date_from,
+        date_to=date_to,
+    )
+
+
+@shop_requests_bp.route('/receipts')
+def receipts():
+    """Show submitted payment receipts for this worker's printshops."""
+    login_redirect = _check_shop_user()
+    if login_redirect:
+        return login_redirect
+
+    shops = _get_accessible_shops()
+    shop_ids = [shop.id for shop in shops]
+    submitted_receipts = []
+    pagination = None
+    search = request.args.get('q', '').strip()[:100]
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+    if shop_ids:
+        receipt_query, search, date_from, date_to = _filtered_request_query(
+            shop_ids, receipt_only=True
+        )
+        page = request.args.get('page', 1, type=int)
+        pagination = receipt_query.order_by(
+            PrintRequest.payment_submitted_at.desc(), PrintRequest.id.desc()
+        ).paginate(page=max(page, 1), per_page=10, error_out=False)
+        submitted_receipts = pagination.items
+
+    if len(shops) == 1:
+        page_shop_name = shops[0].name
+    elif shops:
+        page_shop_name = 'All managed printshops'
+    else:
+        page_shop_name = 'No printshop assigned'
+
+    return render_template(
+        'staff/receipts.html',
+        receipts=submitted_receipts,
+        page_shop_name=page_shop_name,
+        pagination=pagination,
+        search=search,
+        date_from=date_from,
+        date_to=date_to,
     )
 
 
@@ -317,7 +419,7 @@ def new_walk_in_request(request_id):
     for uploaded_file in uploaded_files:
         safe_filename = secure_filename(uploaded_file.filename)
         extension = os.path.splitext(safe_filename)[1].lower()
-        if extension not in ALLOWED_PRINT_FILE_EXTENSIONS:
+        if extension not in ALLOWED_PRINT_FILE_EXTENSIONS or not is_valid_print_upload(uploaded_file, extension):
             flash('Each attachment must be a PDF, Word document, JPG, or PNG file.', 'error')
             return show_form()
         safe_files.append((uploaded_file, safe_filename))
@@ -346,6 +448,8 @@ def new_walk_in_request(request_id):
 
     if not is_editing:
         db.session.add(print_request)
+        db.session.flush()
+        print_request.assign_request_reference()
     db.session.commit()
     flash(
         'Print request updated.' if is_editing else 'Print request created.',
@@ -364,6 +468,8 @@ def update_request(request_id):
     shops = _get_accessible_shops()
     shop_ids = [shop.id for shop in shops]
     print_request = _get_authorized_request_or_404(request_id, shop_ids)
+    previous_status = print_request.status
+    previous_price = print_request.price
     if not print_request.change_status(request.form.get('status')):
         db.session.rollback()
         flash('Choose a valid request status.', 'error')
@@ -379,6 +485,38 @@ def update_request(request_id):
         db.session.rollback()
         flash('Enter a valid price greater than zero.', 'error')
         return redirect(url_for('shop_requests.inbox'))
+
+    customer_id = print_request.customer_account_id
+    customer_link = url_for('customer_bp.dashboard')
+    reference = print_request.request_reference or f'Request #{print_request.id}'
+    if customer_id:
+        if print_request.price is not None and print_request.price != previous_price:
+            notify_account(
+                customer_id,
+                'Price set',
+                f'{print_request.printshop.name} set the price of {reference} to ₱{print_request.price:,.2f}.',
+                customer_link,
+                'price',
+            )
+        status_changed = print_request.status != previous_status
+        # Moving a pending request directly to Printing or Ready also means
+        # the printshop accepted it, so save the acceptance alert as well.
+        accepted_statuses = {'accepted', 'in_progress', 'ready', 'completed'}
+        if status_changed and previous_status == 'pending' and print_request.status in accepted_statuses:
+            notify_account(
+                customer_id,
+                'Request accepted',
+                f'{reference} has been accepted by {print_request.printshop.name}.',
+                customer_link,
+                'request_status',
+            )
+        later_status_notifications = {
+            'in_progress': ('Printing started', f'{print_request.printshop.name} started printing {reference}.'),
+            'ready': ('Ready for pick up', f'{reference} is ready for pickup at {print_request.printshop.name}.'),
+        }
+        if status_changed and print_request.status in later_status_notifications:
+            title, message = later_status_notifications[print_request.status]
+            notify_account(customer_id, title, message, customer_link, 'request_status')
 
     db.session.commit()
     flash('Request changes saved.', 'success')
